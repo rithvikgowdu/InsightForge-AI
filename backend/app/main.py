@@ -1,18 +1,19 @@
 from fastapi import FastAPI
 
 from app.api.v1.health import router as health_router
+from app.core.config import settings
 
 app = FastAPI(
-    title="InsightForge AI",
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
     description="AI-powered Product Discovery Platform",
-    version="1.0.0",
 )
 
 
 @app.get("/")
 def root():
     return {
-        "message": "Welcome to InsightForge AI 🚀"
+        "message": f"Welcome to {settings.APP_NAME} 🚀"
     }
 
 
