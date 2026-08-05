@@ -1,5 +1,12 @@
+import DashboardLayout from "../layouts/DashboardLayout";
+
 function Analysis() {
-  return <h1>Analysis Page</h1>;
+  return (
+    <DashboardLayout>
+      <h1>Analysis</h1>
+      <p>Analysis page coming soon.</p>
+    </DashboardLayout>
+  );
 }
 
 export default Analysis;
