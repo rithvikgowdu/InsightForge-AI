@@ -1,5 +1,11 @@
+"""
+Database engine and session management.
+"""
+
+from collections.abc import Generator
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import settings
 
@@ -9,9 +15,20 @@ engine = create_engine(
     echo=settings.DEBUG,
 )
 
-# Session factory
+# Create a session factory
 SessionLocal = sessionmaker(
     bind=engine,
+    class_=Session,
     autoflush=False,
     autocommit=False,
 )
+
+def get_db() -> Generator[Session, None, None]:
+    """
+    Provide a database session for each request.
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

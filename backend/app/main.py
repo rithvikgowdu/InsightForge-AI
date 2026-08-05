@@ -10,8 +10,13 @@ app = FastAPI(
 )
 
 
-@app.get("/")
-def root():
+@app.get(
+    "/",
+    summary="Application Root",
+    description="Returns the application status.",
+    tags=["Root"],
+)
+def root() -> dict:
     return {
         "message": f"Welcome to {settings.APP_NAME} 🚀"
     }

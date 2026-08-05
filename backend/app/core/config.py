@@ -1,11 +1,20 @@
+"""
+Application configuration.
+
+Loads configuration from the backend/.env file.
+"""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    # Application
     APP_NAME: str = "InsightForge AI"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
-    DATABASE_URL: str = "postgresql+psycopg://postgres:password@localhost:5432/insightforge"
+
+    # Database
+    DATABASE_URL: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
