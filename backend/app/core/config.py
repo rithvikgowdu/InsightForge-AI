@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
+    # GitHub
+    GITHUB_TOKEN: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
