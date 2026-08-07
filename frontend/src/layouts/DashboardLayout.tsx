@@ -1,11 +1,9 @@
-import { ReactNode } from "react";
-
 import Navbar from "../components/layout/Navbar";
 import Sidebar from "../components/layout/Sidebar";
 import Footer from "../components/layout/Footer";
 
 type DashboardLayoutProps = {
-  children: ReactNode;
+  children: React.ReactNode;
 };
 
 function DashboardLayout({ children }: DashboardLayoutProps) {
