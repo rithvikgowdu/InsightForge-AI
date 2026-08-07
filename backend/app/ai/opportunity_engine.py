@@ -4,6 +4,7 @@ Transforms complaint summaries into product opportunities.
 
 import json
 import ollama
+from app.ai.llm_parser import LLMParser
 
 
 class OpportunityEngine:
@@ -56,6 +57,6 @@ Return exactly this structure:
             ],
         )
 
-        return json.loads(
+        return LLMParser.extract_json(
             response["message"]["content"]
         )
