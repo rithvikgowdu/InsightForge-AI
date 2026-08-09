@@ -3,7 +3,8 @@ Main orchestration service for InsightForge AI.
 """
 
 from collections import defaultdict
-
+from sqlalchemy.orm import Session
+from app.repositories.analysis_repository import AnalysisRepository
 from app.ai.clustering import ClusterEngine
 from app.ai.cluster_summarizer import ClusterSummarizer
 from app.ai.document import Document
@@ -21,6 +22,7 @@ class AnalysisService:
     @classmethod
     def analyze_repository(
         cls,
+        db: Session,
         owner: str,
         repository: str,
         limit: int = 20,
@@ -100,5 +102,15 @@ class AnalysisService:
                     "opportunity": opportunity,
                 }
             )
+
+        AnalysisRepository.create(
+            db=db,
+            repository=f"{owner}/{repository}",
+            status="completed",
+            total_clusters=len(results),
+            results={
+                "clusters": results,
+            },
+        )
 
         return results

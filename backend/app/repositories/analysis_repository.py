@@ -1,0 +1,53 @@
+from sqlalchemy.orm import Session
+
+from app.models.analysis import Analysis
+
+
+class AnalysisRepository:
+    """
+    Handles database operations for analysis runs.
+    """
+
+    @staticmethod
+    def create(
+        db: Session,
+        repository: str,
+        status: str,
+        total_clusters: int,
+        results: dict,
+    ) -> Analysis:
+        analysis = Analysis(
+            repository=repository,
+            status=status,
+            total_clusters=total_clusters,
+            results=results,
+        )
+
+        db.add(analysis)
+        db.commit()
+        db.refresh(analysis)
+
+        return analysis
+
+    @staticmethod
+    def get_by_id(
+        db: Session,
+        analysis_id: int,
+    ) -> Analysis | None:
+        return (
+            db.query(Analysis)
+            .filter(Analysis.id == analysis_id)
+            .first()
+        )
+
+    @staticmethod
+    def get_recent(
+        db: Session,
+        limit: int = 10,
+    ) -> list[Analysis]:
+        return (
+            db.query(Analysis)
+            .order_by(Analysis.created_at.desc())
+            .limit(limit)
+            .all()
+        )
