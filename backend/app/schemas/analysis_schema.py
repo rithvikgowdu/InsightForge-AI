@@ -15,6 +15,8 @@ class ClusterResult(BaseModel):
 
 
 class AnalysisResponse(BaseModel):
+    id: int
     repository: str
+    status: str
     total_clusters: int
     results: list[ClusterResult]

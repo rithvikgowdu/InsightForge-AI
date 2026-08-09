@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database.session import SessionLocal
@@ -9,6 +9,7 @@ from app.schemas.analysis_schema import (
     AnalysisResponse,
 )
 from app.services.analysis_service import AnalysisService
+from app.tasks.analysis_task import run_analysis
 
 
 router = APIRouter(
@@ -32,31 +33,36 @@ def get_db():
 )
 def analyze_repository(
     request: AnalysisRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     """
-    Analyze a GitHub repository.
+    Start analysis of a GitHub repository.
     """
 
-    try:
-        results = AnalysisService.analyze_repository(
-            db=db,
-            owner=request.owner,
-            repository=request.repository,
-            limit=request.limit,
-        )
+    analysis = AnalysisRepository.create(
+        db=db,
+        repository=f"{request.owner}/{request.repository}",
+        status="pending",
+        total_clusters=0,
+        results={},
+    )
 
-        return AnalysisResponse(
-            repository=f"{request.owner}/{request.repository}",
-            total_clusters=len(results),
-            results=results,
-        )
+    background_tasks.add_task(
+        run_analysis,
+        analysis_id=analysis.id,
+        owner=request.owner,
+        repository=request.repository,
+        limit=request.limit,
+    )
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=str(e),
-        )
+    return AnalysisResponse(
+        id=analysis.id,
+        repository=f"{request.owner}/{request.repository}",
+        status=analysis.status,
+        total_clusters=0,
+        results=[],
+    )
 
 
 @router.get(
@@ -74,6 +80,8 @@ def get_analysis_history(
         db=db,
         limit=10,
     )
+
+
 @router.get(
     "/{analysis_id}",
     response_model=AnalysisHistoryResponse,

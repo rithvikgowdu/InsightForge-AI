@@ -25,19 +25,20 @@ class AnalysisService:
     def analyze_repository(
         cls,
         db: Session,
+        analysis_id: int,
         owner: str,
         repository: str,
         limit: int = 20,
     ) -> list[dict]:
 
-        # Create an analysis record before starting the pipeline
-        analysis = AnalysisRepository.create(
+        # Retrieve the analysis record created by the API
+        analysis = AnalysisRepository.get_by_id(
             db=db,
-            repository=f"{owner}/{repository}",
-            status="pending",
-            total_clusters=0,
-            results={},
+            analysis_id=analysis_id,
         )
+
+        if analysis is None:
+            raise ValueError("Analysis record not found.")
 
         # Mark the analysis as running
         AnalysisRepository.update_status(
