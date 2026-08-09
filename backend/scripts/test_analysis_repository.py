@@ -13,21 +13,10 @@ def main():
         analysis = AnalysisRepository.create(
             db=db,
             repository="microsoft/vscode",
-            status="completed",
-            total_clusters=2,
+            status="pending",
+            total_clusters=0,
             results={
-                "clusters": [
-                    {
-                        "cluster": 0,
-                        "documents": 5,
-                        "summary": "Chat session corruption issues.",
-                    },
-                    {
-                        "cluster": 1,
-                        "documents": 3,
-                        "summary": "UI configuration issues.",
-                    },
-                ]
+                "clusters": []
             },
         )
 
@@ -41,6 +30,27 @@ def main():
         print(f"Status: {analysis.status}")
         print(f"Clusters: {analysis.total_clusters}")
 
+        # Test status: pending -> running
+        updated = AnalysisRepository.update_status(
+            db=db,
+            analysis_id=analysis.id,
+            status="running",
+        )
+
+        print("\nUpdated status:")
+        print(updated.status)
+
+        # Test status: running -> completed
+        updated = AnalysisRepository.update_status(
+            db=db,
+            analysis_id=analysis.id,
+            status="completed",
+        )
+
+        print("\nFinal status:")
+        print(updated.status)
+
+        # Test fetching by ID
         fetched = AnalysisRepository.get_by_id(
             db=db,
             analysis_id=analysis.id,
@@ -49,6 +59,7 @@ def main():
         print("\nFetched analysis:")
         print(fetched.results)
 
+        # Test recent analyses
         recent = AnalysisRepository.get_recent(
             db=db,
             limit=10,

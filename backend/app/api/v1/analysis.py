@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database.session import SessionLocal
+from app.repositories.analysis_repository import AnalysisRepository
+from app.schemas.analysis_history_schema import AnalysisHistoryResponse
 from app.schemas.analysis_schema import (
     AnalysisRequest,
     AnalysisResponse,
@@ -55,3 +57,44 @@ def analyze_repository(
             status_code=500,
             detail=str(e),
         )
+
+
+@router.get(
+    "/history",
+    response_model=list[AnalysisHistoryResponse],
+)
+def get_analysis_history(
+    db: Session = Depends(get_db),
+):
+    """
+    Return recent analysis runs.
+    """
+
+    return AnalysisRepository.get_recent(
+        db=db,
+        limit=10,
+    )
+@router.get(
+    "/{analysis_id}",
+    response_model=AnalysisHistoryResponse,
+)
+def get_analysis(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Return a single analysis run.
+    """
+
+    analysis = AnalysisRepository.get_by_id(
+        db=db,
+        analysis_id=analysis_id,
+    )
+
+    if analysis is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Analysis not found",
+        )
+
+    return analysis

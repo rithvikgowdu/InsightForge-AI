@@ -51,3 +51,24 @@ class AnalysisRepository:
             .limit(limit)
             .all()
         )
+    @staticmethod
+    def update_status(
+        db: Session,
+        analysis_id: int,
+        status: str,
+    ) -> Analysis | None:
+        analysis = (
+            db.query(Analysis)
+            .filter(Analysis.id == analysis_id)
+            .first()
+        )
+
+        if analysis is None:
+            return None
+
+        analysis.status = status
+
+        db.commit()
+        db.refresh(analysis)
+
+        return analysis

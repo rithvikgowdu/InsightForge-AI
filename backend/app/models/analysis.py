@@ -24,7 +24,7 @@ class Analysis(Base):
     status: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
-        default="completed",
+        default="pending",
     )
 
     total_clusters: Mapped[int] = mapped_column(
