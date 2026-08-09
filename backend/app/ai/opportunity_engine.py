@@ -7,6 +7,7 @@ import ollama
 from app.ai.llm_parser import LLMParser
 
 
+
 class OpportunityEngine:
     """
     Generates business opportunities from complaint clusters.

@@ -16,6 +16,7 @@ class ClusterEngine:
     ):
         self.clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
+            min_samples=1,
             metric="euclidean",
         )
 
@@ -34,5 +35,6 @@ class ClusterEngine:
         labels = self.clusterer.fit_predict(
             embeddings
         )
+        print("HDBSCAN labels:", labels.tolist())
 
         return labels.tolist()
