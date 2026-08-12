@@ -37,6 +37,28 @@ class UserRepository:
         statement = select(User).where(User.username == username)
         return self.db.scalar(statement)
 
+    def create(
+    self,
+    username: str,
+    email: str,
+    hashed_password: str,
+    ) -> User:
+        """
+        Create a new user.
+        """
+
+        user = User(
+            username=username,
+            email=email,
+            hashed_password=hashed_password,
+        )
+
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+
+        return user
+
     def get_all(self) -> list[User]:
         """
         Return all users.
