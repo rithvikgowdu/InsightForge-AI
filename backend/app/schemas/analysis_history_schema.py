@@ -14,3 +14,14 @@ class AnalysisHistoryResponse(BaseModel):
     model_config = {
         "from_attributes": True,
     }
+
+
+class AnalysisStatusResponse(BaseModel):
+    id: int
+    repository: str
+    status: str
+    total_clusters: int
+
+    model_config = {
+        "from_attributes": True,
+    }

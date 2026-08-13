@@ -1,14 +1,17 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.security import get_current_user
 from app.database.session import SessionLocal
 from app.repositories.analysis_repository import AnalysisRepository
-from app.schemas.analysis_history_schema import AnalysisHistoryResponse
+from app.schemas.analysis_history_schema import (
+    AnalysisHistoryResponse,
+    AnalysisStatusResponse,
+)
 from app.schemas.analysis_schema import (
     AnalysisRequest,
     AnalysisResponse,
 )
-from app.services.analysis_service import AnalysisService
 from app.tasks.analysis_task import run_analysis
 
 
@@ -35,6 +38,7 @@ def analyze_repository(
     request: AnalysisRequest,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     """
     Start analysis of a GitHub repository.
@@ -42,6 +46,7 @@ def analyze_repository(
 
     analysis = AnalysisRepository.create(
         db=db,
+        user_id=current_user.id,
         repository=f"{request.owner}/{request.repository}",
         status="pending",
         total_clusters=0,
@@ -71,6 +76,7 @@ def analyze_repository(
 )
 def get_analysis_history(
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     """
     Return recent analysis runs.
@@ -78,8 +84,37 @@ def get_analysis_history(
 
     return AnalysisRepository.get_recent(
         db=db,
+        user_id=current_user.id,
         limit=10,
     )
+
+
+@router.get(
+    "/{analysis_id}/status",
+    response_model=AnalysisStatusResponse,
+)
+def get_analysis_status(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """
+    Return the current status of an analysis run.
+    """
+
+    analysis = AnalysisRepository.get_by_id_for_user(
+        db=db,
+        analysis_id=analysis_id,
+        user_id=current_user.id,
+    )
+
+    if analysis is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Analysis not found",
+        )
+
+    return analysis
 
 
 @router.get(
@@ -89,14 +124,16 @@ def get_analysis_history(
 def get_analysis(
     analysis_id: int,
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     """
     Return a single analysis run.
     """
 
-    analysis = AnalysisRepository.get_by_id(
+    analysis = AnalysisRepository.get_by_id_for_user(
         db=db,
         analysis_id=analysis_id,
+        user_id=current_user.id,
     )
 
     if analysis is None:
