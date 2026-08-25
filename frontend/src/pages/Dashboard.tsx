@@ -1,11 +1,12 @@
 import SearchBar from "../components/dashboard/SearchBar";
 import StatsCard from "../components/dashboard/StatsCard";
 import ComplaintCard from "../components/dashboard/ComplaintCard";
+import PainScoreCard from "../components/dashboard/PainScoreCard";
+import TrendCard from "../components/dashboard/TrendCard";
+import OpportunityScoreCard from "../components/dashboard/OpportunityScoreCard";
 import FeatureRequestCard from "../components/dashboard/FeatureRequestCard";
 import OpportunityCard from "../components/dashboard/OpportunityCard";
 import RecentSearches from "../components/dashboard/RecentSearches";
-import PainScoreCard from "../components/dashboard/PainScoreCard";
-import TrendCard from "../components/dashboard/TrendCard";
 
 function Dashboard() {
   const trendData = [
@@ -15,17 +16,18 @@ function Dashboard() {
     { month: "Aug", mentions: 1284 },
   ];
 
-  
+
+
   return (
     <div className="space-y-8">
 
-      {/* Search Section */}
+      {/* Search */}
       <section>
         <SearchBar />
       </section>
 
 
-      {/* Overview Section */}
+      {/* Overview */}
       <section>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
 
@@ -48,7 +50,7 @@ function Dashboard() {
       </section>
 
 
-      {/* Customer Problems Section */}
+      {/* Customer Problems */}
       <section>
 
         <div className="mb-4">
@@ -62,33 +64,69 @@ function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-  <ComplaintCard
-    title="Late Delivery"
-    mentions={1284}
-    painScore={8.7}
-    summary="Users frequently complain about delayed deliveries."
-  />
 
-  <PainScoreCard score={8.7} />
-</div>
+          <ComplaintCard
+            title="Late Delivery"
+            mentions={1284}
+            painScore={8.7}
+            summary="Users frequently complain about delayed deliveries."
+          />
+
+          <PainScoreCard
+            score={8.7}
+          />
+
+        </div>
 
       </section>
 
-{/* Trend Section */}
+
+      {/* Emerging Trends */}
+      <section>
+
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold text-white">
+            Emerging Trends
+          </h2>
+
+          <p className="mt-1 text-sm text-slate-400">
+            Track how frequently customer problems are mentioned over time.
+          </p>
+        </div>
+
+        <TrendCard
+          data={trendData}
+        />
+
+      </section>
+      {/* Opportunity Intelligence */}
 <section>
   <div className="mb-4">
     <h2 className="text-2xl font-semibold text-white">
-      Emerging Trends
+      Opportunity Intelligence
     </h2>
 
     <p className="mt-1 text-sm text-slate-400">
-      Track how frequently customer problems are mentioned over time.
+      AI-generated assessment of the business potential behind a problem.
     </p>
   </div>
 
-  <TrendCard data={trendData} />
+  <OpportunityScoreCard
+    score={8.6}
+    pain={8.7}
+    frequency={8.4}
+    growth={8.9}
+    marketPotential={8.2}
+    aiFit={9.1}
+    confidence={8.5}
+  />
 </section>
-      {/* Feature Requests Section */}
+
+
+      
+
+
+      {/* Feature Requests */}
       <section>
 
         <div className="mb-4">
@@ -101,20 +139,16 @@ function Dashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6">
-
-          <FeatureRequestCard
-            title="Real-Time Delivery Tracking"
-            mentions={734}
-            description="Users want more accurate real-time information about their delivery status."
-          />
-
-        </div>
+        <FeatureRequestCard
+          title="Real-Time Delivery Tracking"
+          mentions={734}
+          description="Users want more accurate real-time information about their delivery status."
+        />
 
       </section>
 
 
-      {/* Opportunities and Recent Searches */}
+      {/* Product Opportunities */}
       <section>
 
         <div className="mb-4">
@@ -136,7 +170,7 @@ function Dashboard() {
         </div>
 
       </section>
-
+      
     </div>
   );
 }

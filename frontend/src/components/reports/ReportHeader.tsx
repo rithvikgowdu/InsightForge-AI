@@ -1,0 +1,73 @@
+import { FiDownload, FiShare2 } from "react-icons/fi";
+
+type ReportHeaderProps = {
+  title: string;
+  industry: string;
+  generatedAt: string;
+};
+
+function ReportHeader({
+  title,
+  industry,
+  generatedAt,
+}: ReportHeaderProps) {
+  return (
+    <section className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-lg">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+
+        {/* Report information */}
+        <div>
+          <p className="text-sm font-medium text-blue-400">
+            InsightForge AI Report
+          </p>
+
+          <h1 className="mt-2 text-3xl font-bold text-white">
+            {title}
+          </h1>
+
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-400">
+            <span>
+              Industry: {industry}
+            </span>
+
+            <span className="hidden sm:inline">
+              •
+            </span>
+
+            <span>
+              Generated {generatedAt}
+            </span>
+          </div>
+        </div>
+
+
+        {/* Actions */}
+        <div className="flex flex-col gap-3 sm:flex-row">
+
+          <button
+            type="button"
+            className="flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
+          >
+            <FiShare2 size={16} />
+
+            Share Report
+          </button>
+
+
+          <button
+            type="button"
+            className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
+          >
+            <FiDownload size={16} />
+
+            Export Report
+          </button>
+
+        </div>
+
+      </div>
+    </section>
+  );
+}
+
+export default ReportHeader;
