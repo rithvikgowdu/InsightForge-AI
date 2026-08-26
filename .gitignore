@@ -1,4 +1,39 @@
-# Environment variables
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual Environment
+backend/.venv/
+
+# Environment Variables
+backend/.env
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Python cache
+.pytest_cache/
+
+# Logs
+*.log
+
+# Node
+frontend/node_modules/
+
+# Build
+dist/
+build/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Database
+*.sqlite3# Environment variables
 .env
 
 # Python
