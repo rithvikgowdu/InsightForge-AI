@@ -6,6 +6,13 @@ import type {
   AnalysisHistoryResponse,
 } from "../types/analysis";
 
+interface AnalysisStatusResponse {
+  id: number;
+  repository: string;
+  status: string;
+  total_clusters: number;
+}
+
 export const analyzeRepository = async (
   request: AnalysisRequest
 ): Promise<AnalysisResponse> => {
@@ -14,7 +21,29 @@ export const analyzeRepository = async (
     request
   );
 
-  return response.data;
+  const analysisId = response.data.id;
+
+  while (true) {
+    const statusResponse = await apiClient.get<AnalysisStatusResponse>(
+      `${API_ENDPOINTS.analysis}/${analysisId}/status`
+    );
+
+    const status = statusResponse.data.status;
+
+    if (status === "completed") {
+      const resultResponse = await apiClient.get<AnalysisResponse>(
+        `${API_ENDPOINTS.analysis}/${analysisId}`
+      );
+
+      return resultResponse.data;
+    }
+
+    if (status === "failed") {
+      throw new Error("Analysis failed on the backend.");
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
 };
 
 export const getAnalysisHistory = async (): Promise<

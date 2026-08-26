@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
 import DashboardLayout from "../layouts/DashboardLayout";
-import { analyzeRepository } from "../services/analysis.service";
-import type { AnalysisResponse } from "../types/analysis";
+import {
+  analyzeRepository,
+  getAnalysisHistory,
+  getAnalysisById,
+} from "../services/analysis.service";
+import type {
+  AnalysisResponse,
+  ClusterResult,
+} from "../types/analysis";
 
 function Analysis() {
   const [owner, setOwner] = useState("");
@@ -13,6 +20,36 @@ function Analysis() {
   const [result, setResult] = useState<AnalysisResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadLatestAnalysis = async () => {
+      try {
+        const history = await getAnalysisHistory();
+
+        const completedAnalyses = history
+          .filter((analysis) => analysis.status === "completed")
+          .sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
+          );
+
+        if (completedAnalyses.length === 0) {
+          return;
+        }
+
+        const latestAnalysis = await getAnalysisById(
+          completedAnalyses[0].id
+        );
+
+        setResult(latestAnalysis);
+      } catch (err) {
+        console.error("Failed to load analysis history:", err);
+      }
+    };
+
+    loadLatestAnalysis();
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -38,6 +75,17 @@ function Analysis() {
       setLoading(false);
     }
   };
+
+  const clusters: ClusterResult[] = Array.isArray(result?.results)
+    ? result.results
+    : result?.results &&
+      typeof result.results === "object" &&
+      "clusters" in result.results &&
+      Array.isArray(
+        (result.results as { clusters?: ClusterResult[] }).clusters
+      )
+    ? (result.results as { clusters: ClusterResult[] }).clusters
+    : [];
 
   return (
     <DashboardLayout>
@@ -118,7 +166,7 @@ function Analysis() {
 
             <h3>Clusters</h3>
 
-            {result.results.map((cluster) => (
+            {clusters.map((cluster) => (
               <article key={cluster.cluster}>
                 <h4>Cluster {cluster.cluster}</h4>
 
