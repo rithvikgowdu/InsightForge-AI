@@ -2,10 +2,9 @@
 Transforms complaint summaries into product opportunities.
 """
 
-import json
 import ollama
-from app.ai.llm_parser import LLMParser
 
+from app.ai.llm_parser import LLMParser
 
 
 class OpportunityEngine:
@@ -25,27 +24,37 @@ You are an expert Startup Consultant and Product Manager.
 
 Analyze the complaint summary below.
 
-Return ONLY valid JSON.
+You MUST return ONLY a single valid JSON object.
+Do not include Markdown.
+Do not include ```json.
+Do not include explanations before or after the JSON.
+Use double quotes for all JSON keys and string values.
+Do not use trailing commas.
 
-Complaint Summary:
-
-{cluster_summary}
-
-Return exactly this structure:
+The JSON must follow exactly this structure:
 
 {{
-  "problem_statement": "...",
-  "business_opportunity": "...",
-  "ai_solution": "...",
-  "target_customers": "...",
+  "problem_statement": "string",
+  "business_opportunity": "string",
+  "ai_solution": "string",
+  "target_customers": "string",
   "mvp_features": [
-      "...",
-      "...",
-      "..."
+    "string",
+    "string",
+    "string"
   ],
-  "market_potential": "Low | Medium | High",
+  "market_potential": "Low",
   "confidence_score": 0.0
 }}
+
+Rules:
+- market_potential must be exactly one of: Low, Medium, High.
+- confidence_score must be a number between 0.0 and 1.0.
+- mvp_features must contain exactly 3 strings.
+- Return nothing except the JSON object.
+
+Complaint Summary:
+{cluster_summary}
 """
 
         response = ollama.chat(
@@ -56,6 +65,7 @@ Return exactly this structure:
                     "content": prompt,
                 }
             ],
+            format="json",
         )
 
         return LLMParser.extract_json(
