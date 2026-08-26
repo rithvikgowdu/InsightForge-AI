@@ -5,10 +5,12 @@ User API endpoints.
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.security import get_current_user
 from app.database.session import get_db
 from app.repositories.user_repository import UserRepository
 from app.schemas.user_schema import UserResponse
 from app.services.user_service import UserService
+
 
 router = APIRouter(
     prefix="/users",
@@ -23,6 +25,7 @@ router = APIRouter(
 )
 def get_users(
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     repository = UserRepository(db)
     service = UserService(repository)
@@ -38,6 +41,7 @@ def get_users(
 def get_user(
     user_id: int,
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     repository = UserRepository(db)
     service = UserService(repository)

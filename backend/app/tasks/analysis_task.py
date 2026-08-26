@@ -3,7 +3,6 @@ Background task for repository analysis.
 """
 
 from app.database.session import SessionLocal
-from app.repositories.analysis_repository import AnalysisRepository
 from app.services.analysis_service import AnalysisService
 
 
