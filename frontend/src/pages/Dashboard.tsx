@@ -227,12 +227,15 @@ function Dashboard() {
                       </div>
 
                      {analysis.status === "completed" && (
-  <a
-    href="/reports"
+  <button
+    type="button"
+    onClick={() => {
+      window.location.href = `/reports?id=${analysis.id}`;
+    }}
     style={styles.secondaryButton}
   >
     View Report
-  </a>
+  </button>
 )}
                     </div>
                   ))}

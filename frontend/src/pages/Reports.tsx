@@ -82,8 +82,20 @@ function Reports() {
   };
 
   const closeReport = () => {
-    setSelectedReport(null);
-  };
+  setSelectedReport(null);
+  window.history.replaceState({}, "", "/reports");
+};
+useEffect(() => {
+  const id = new URLSearchParams(window.location.search).get("id");
+
+  if (id) {
+    const analysisId = Number(id);
+
+    if (!Number.isNaN(analysisId)) {
+      openReport(analysisId);
+    }
+  }
+}, []);
 
   const getClusters = (
     report: AnalysisResponse
