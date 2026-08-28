@@ -21,7 +21,7 @@ class RegisterRequest(BaseModel):
     )
 
 
-class UserResponse(BaseModel):
+class AuthUserResponse(BaseModel):
     id: int
     username: str
     email: str

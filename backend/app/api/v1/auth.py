@@ -13,7 +13,7 @@ from app.schemas.auth_schema import (
     LoginRequest,
     RegisterRequest,
     TokenResponse,
-    UserResponse,
+    AuthUserResponse,
 )
 
 
@@ -35,7 +35,7 @@ def get_db():
 
 @router.post(
     "/register",
-    response_model=UserResponse,
+    response_model=AuthUserResponse,
 )
 def register(
     request: RegisterRequest,
@@ -132,7 +132,7 @@ def login(
     )
 @router.get(
     "/me",
-    response_model=UserResponse,
+    response_model=AuthUserResponse,
 )
 def get_me(
     current_user = Depends(get_current_user),
