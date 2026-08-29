@@ -129,9 +129,13 @@ function Analysis() {
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.inputGroup}>
-            <label htmlFor="owner" style={styles.label}>
-              GitHub Owner
-            </label>
+           <label htmlFor="owner" style={styles.label}>
+  GitHub Owner
+</label>
+
+<span style={styles.inputHint}>
+  The GitHub username or organization.
+</span>
 
             <input
               id="owner"
@@ -145,9 +149,13 @@ function Analysis() {
           </div>
 
           <div style={styles.inputGroup}>
-            <label htmlFor="repository" style={styles.label}>
-              Repository
-            </label>
+           <label htmlFor="repository" style={styles.label}>
+  Repository
+</label>
+
+<span style={styles.inputHint}>
+  The name of the GitHub repository.
+</span>
 
             <input
               id="repository"
@@ -164,8 +172,12 @@ function Analysis() {
 
           <div style={styles.inputGroup}>
             <label htmlFor="limit" style={styles.label}>
-              Issues to analyze
-            </label>
+  Issues to analyze
+</label>
+
+<span style={styles.inputHint}>
+  More issues may produce richer insights.
+</span>
 
             <input
               id="limit"
@@ -527,12 +539,17 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "0 4px 16px rgba(15, 23, 42, 0.05)",
   },
 
-  inputGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "7px",
-  },
-
+ inputGroup: {
+  display: "flex",
+  flexDirection: "column",
+  gap: "7px",
+},
+  
+inputHint: {
+  marginTop: "-2px",
+  fontSize: "11px",
+  color: "#94a3b8",
+},
   label: {
     fontSize: "13px",
     fontWeight: 650,
