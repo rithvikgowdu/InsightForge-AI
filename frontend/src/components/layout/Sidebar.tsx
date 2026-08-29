@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 
 function Sidebar() {
   return (
-    <aside style={styles.sidebar}>
+    <aside className="app-sidebar" style={styles.sidebar}>
       <div style={styles.navigationTitle}>
         WORKSPACE
       </div>

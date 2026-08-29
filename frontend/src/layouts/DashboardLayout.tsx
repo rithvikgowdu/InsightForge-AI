@@ -13,18 +13,20 @@ function DashboardLayout({ children }: DashboardLayoutProps) {
       <Navbar />
 
       <div
-        style={{
-          display: "flex",
-        }}
-      >
+  className="dashboard-shell"
+  style={{
+    display: "flex",
+  }}
+>
         <Sidebar />
 
-        <main
-          style={{
-            padding: "20px",
-            flex: 1,
-          }}
-        >
+       <main
+  className="dashboard-main"
+  style={{
+    padding: "20px",
+    flex: 1,
+  }}
+>
           {children}
         </main>
       </div>

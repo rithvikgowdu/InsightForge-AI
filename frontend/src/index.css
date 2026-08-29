@@ -2,3 +2,66 @@ body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+* {
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .analysis-form {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .analysis-overview {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .analysis-cluster-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .dashboard-shell {
+    flex-direction: column !important;
+  }
+
+  .app-sidebar {
+    width: 100% !important;
+    min-height: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+
+  .dashboard-main {
+    width: 100%;
+    padding: 16px !important;
+  }
+
+  .analysis-form {
+    grid-template-columns: 1fr !important;
+    padding: 16px !important;
+  }
+
+  .analysis-overview {
+    grid-template-columns: 1fr !important;
+  }
+
+  .analysis-detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .analysis-metrics {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .analysis-form {
+    gap: 12px !important;
+  }
+
+  .analysis-cluster-grid {
+    gap: 14px !important;
+  }
+}

@@ -127,7 +127,11 @@ function Analysis() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
+        <form
+  className="analysis-form"
+  onSubmit={handleSubmit}
+  style={styles.form}
+>
           <div style={styles.inputGroup}>
            <label htmlFor="owner" style={styles.label}>
   GitHub Owner
@@ -234,7 +238,10 @@ function Analysis() {
 
         {result && !loading && (
           <>
-            <section style={styles.overview}>
+            <section
+  className="analysis-overview"
+  style={styles.overview}
+>
               <div style={styles.overviewCard}>
                 <span style={styles.overviewLabel}>
                   Repository
@@ -287,7 +294,10 @@ function Analysis() {
                 </p>
               </div>
             ) : (
-              <div style={styles.clusterGrid}>
+              <div
+  className="analysis-cluster-grid"
+  style={styles.clusterGrid}
+>
                 {clusters.map((cluster) => {
                   const opportunity =
                     cluster.opportunity as Opportunity;
@@ -445,7 +455,10 @@ function Analysis() {
                             </span>
                           </div>
 
-                          <div style={styles.metric}>
+                          <div
+  className="analysis-metrics"
+  style={styles.metrics}
+>
                             <span style={styles.metricLabel}>
                               Confidence
                             </span>
