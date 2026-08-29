@@ -8,8 +8,8 @@ function SecuritySettings() {
     >
       <div className="space-y-4">
 
+        {/* Password */}
         <div className="flex flex-col gap-4 rounded-lg border border-slate-800 bg-slate-950 p-5 sm:flex-row sm:items-center sm:justify-between">
-
           <div>
             <p className="font-medium text-white">
               Password
@@ -22,16 +22,15 @@ function SecuritySettings() {
 
           <button
             type="button"
-            className="w-fit rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
+            className="w-fit rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition-all duration-200 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 focus:ring-offset-slate-950"
           >
             Change Password
           </button>
-
         </div>
 
 
+        {/* Two-factor authentication */}
         <div className="flex flex-col gap-4 rounded-lg border border-slate-800 bg-slate-950 p-5 sm:flex-row sm:items-center sm:justify-between">
-
           <div>
             <p className="font-medium text-white">
               Two-factor authentication
@@ -44,11 +43,10 @@ function SecuritySettings() {
 
           <button
             type="button"
-            className="w-fit rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700"
+            className="w-fit rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition-all duration-200 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 focus:ring-offset-slate-950"
           >
             Set Up
           </button>
-
         </div>
 
       </div>

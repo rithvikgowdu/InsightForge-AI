@@ -14,10 +14,14 @@ function LoadingSpinner({
   };
 
   return (
-    <div className="flex items-center justify-center gap-3">
+    <div
+      className="flex items-center justify-center gap-3"
+      role="status"
+      aria-live="polite"
+      aria-label={label}
+    >
       <div
-        role="status"
-        aria-label={label}
+        aria-hidden="true"
         className={`${sizeClasses[size]} animate-spin rounded-full border-slate-700 border-t-blue-500`}
       />
 

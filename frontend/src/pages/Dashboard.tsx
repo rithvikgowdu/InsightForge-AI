@@ -16,21 +16,22 @@ function Dashboard() {
     { month: "Aug", mentions: 1284 },
   ];
 
-
-
   return (
-    <div className="space-y-8">
+    <main className="w-full min-w-0 space-y-8">
 
       {/* Search */}
-      <section>
+      <section aria-label="Dashboard search">
         <SearchBar />
       </section>
 
 
       {/* Overview */}
-      <section>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <section aria-labelledby="overview-title">
+        <h2 id="overview-title" className="sr-only">
+          Dashboard Overview
+        </h2>
 
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <StatsCard
             title="Total Analyses"
             value="325"
@@ -45,16 +46,18 @@ function Dashboard() {
             title="Trending Topics"
             value="41"
           />
-
         </div>
       </section>
 
 
       {/* Customer Problems */}
-      <section>
+      <section aria-labelledby="customer-problems-title">
 
         <div className="mb-4">
-          <h2 className="text-2xl font-semibold text-white">
+          <h2
+            id="customer-problems-title"
+            className="text-2xl font-semibold text-white"
+          >
             Top Customer Problems
           </h2>
 
@@ -82,10 +85,13 @@ function Dashboard() {
 
 
       {/* Emerging Trends */}
-      <section>
+      <section aria-labelledby="emerging-trends-title">
 
         <div className="mb-4">
-          <h2 className="text-2xl font-semibold text-white">
+          <h2
+            id="emerging-trends-title"
+            className="text-2xl font-semibold text-white"
+          >
             Emerging Trends
           </h2>
 
@@ -94,43 +100,48 @@ function Dashboard() {
           </p>
         </div>
 
-        <TrendCard
-          data={trendData}
+        <TrendCard data={trendData} />
+
+      </section>
+
+
+      {/* Opportunity Intelligence */}
+      <section aria-labelledby="opportunity-intelligence-title">
+
+        <div className="mb-4">
+          <h2
+            id="opportunity-intelligence-title"
+            className="text-2xl font-semibold text-white"
+          >
+            Opportunity Intelligence
+          </h2>
+
+          <p className="mt-1 text-sm text-slate-400">
+            AI-generated assessment of the business potential behind a problem.
+          </p>
+        </div>
+
+        <OpportunityScoreCard
+          score={8.6}
+          pain={8.7}
+          frequency={8.4}
+          growth={8.9}
+          marketPotential={8.2}
+          aiFit={9.1}
+          confidence={8.5}
         />
 
       </section>
-      {/* Opportunity Intelligence */}
-<section>
-  <div className="mb-4">
-    <h2 className="text-2xl font-semibold text-white">
-      Opportunity Intelligence
-    </h2>
-
-    <p className="mt-1 text-sm text-slate-400">
-      AI-generated assessment of the business potential behind a problem.
-    </p>
-  </div>
-
-  <OpportunityScoreCard
-    score={8.6}
-    pain={8.7}
-    frequency={8.4}
-    growth={8.9}
-    marketPotential={8.2}
-    aiFit={9.1}
-    confidence={8.5}
-  />
-</section>
-
-
-      
 
 
       {/* Feature Requests */}
-      <section>
+      <section aria-labelledby="feature-requests-title">
 
         <div className="mb-4">
-          <h2 className="text-2xl font-semibold text-white">
+          <h2
+            id="feature-requests-title"
+            className="text-2xl font-semibold text-white"
+          >
             Top Feature Requests
           </h2>
 
@@ -149,10 +160,13 @@ function Dashboard() {
 
 
       {/* Product Opportunities */}
-      <section>
+      <section aria-labelledby="product-opportunities-title">
 
         <div className="mb-4">
-          <h2 className="text-2xl font-semibold text-white">
+          <h2
+            id="product-opportunities-title"
+            className="text-2xl font-semibold text-white"
+          >
             Product Opportunities
           </h2>
 
@@ -170,8 +184,8 @@ function Dashboard() {
         </div>
 
       </section>
-      
-    </div>
+
+    </main>
   );
 }
 

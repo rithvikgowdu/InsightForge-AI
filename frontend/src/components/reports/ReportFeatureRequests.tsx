@@ -28,9 +28,13 @@ const featureRequests: FeatureRequest[] = [
 
 function ReportFeatureRequests() {
   return (
-    <section>
+    <section aria-labelledby="feature-requests-title">
+
       <div className="mb-5">
-        <h2 className="text-2xl font-semibold text-white">
+        <h2
+          id="feature-requests-title"
+          className="text-2xl font-semibold text-white"
+        >
           Feature Requests
         </h2>
 
@@ -41,23 +45,39 @@ function ReportFeatureRequests() {
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900 shadow-lg">
+
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[650px] text-left">
+          <table
+            className="w-full min-w-[650px] text-left"
+            aria-label="Customer feature requests"
+          >
             <thead className="border-b border-slate-800 bg-slate-950">
               <tr>
-                <th className="px-6 py-4 text-xs font-medium uppercase tracking-wide text-slate-500">
+                <th
+                  scope="col"
+                  className="px-6 py-4 text-xs font-medium uppercase tracking-wide text-slate-500"
+                >
                   Feature
                 </th>
 
-                <th className="px-6 py-4 text-xs font-medium uppercase tracking-wide text-slate-500">
+                <th
+                  scope="col"
+                  className="px-6 py-4 text-xs font-medium uppercase tracking-wide text-slate-500"
+                >
                   Mentions
                 </th>
 
-                <th className="px-6 py-4 text-xs font-medium uppercase tracking-wide text-slate-500">
+                <th
+                  scope="col"
+                  className="px-6 py-4 text-xs font-medium uppercase tracking-wide text-slate-500"
+                >
                   Priority
                 </th>
 
-                <th className="px-6 py-4 text-xs font-medium uppercase tracking-wide text-slate-500">
+                <th
+                  scope="col"
+                  className="px-6 py-4 text-xs font-medium uppercase tracking-wide text-slate-500"
+                >
                   Growth
                 </th>
               </tr>
@@ -69,9 +89,12 @@ function ReportFeatureRequests() {
                   key={request.title}
                   className="border-b border-slate-800 last:border-b-0"
                 >
-                  <td className="px-6 py-4 font-medium text-white">
+                  <th
+                    scope="row"
+                    className="px-6 py-4 font-medium text-white"
+                  >
                     {request.title}
-                  </td>
+                  </th>
 
                   <td className="px-6 py-4 text-sm text-slate-400">
                     {request.mentions.toLocaleString()}
@@ -99,6 +122,7 @@ function ReportFeatureRequests() {
             </tbody>
           </table>
         </div>
+
       </div>
     </section>
   );

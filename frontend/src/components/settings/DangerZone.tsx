@@ -1,11 +1,14 @@
-
-
 function DangerZone() {
   return (
-    <section className="rounded-xl border border-red-500/20 bg-slate-900 p-6 shadow-lg">
-
+    <section
+      aria-labelledby="danger-zone-title"
+      className="rounded-xl border border-red-500/20 bg-slate-900 p-6 shadow-lg"
+    >
       <div className="mb-6">
-        <h2 className="text-lg font-semibold text-red-400">
+        <h2
+          id="danger-zone-title"
+          className="text-lg font-semibold text-red-400"
+        >
           Danger Zone
         </h2>
 
@@ -15,9 +18,7 @@ function DangerZone() {
       </div>
 
       <div className="space-y-4">
-
         <div className="flex flex-col gap-4 rounded-lg border border-red-500/10 bg-red-500/5 p-5 sm:flex-row sm:items-center sm:justify-between">
-
           <div>
             <p className="font-medium text-white">
               Delete account
@@ -30,15 +31,12 @@ function DangerZone() {
 
           <button
             type="button"
-            className="w-fit rounded-lg border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/10"
+            className="w-fit rounded-lg border border-red-500/30 px-4 py-2 text-sm font-medium text-red-400 transition-all duration-200 hover:bg-red-500/10 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 focus:ring-offset-slate-950"
           >
             Delete Account
           </button>
-
         </div>
-
       </div>
-
     </section>
   );
 }

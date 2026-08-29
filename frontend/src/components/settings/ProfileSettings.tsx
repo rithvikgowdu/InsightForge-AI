@@ -19,9 +19,11 @@ function ProfileSettings() {
 
           <input
             id="profile-name"
+            name="name"
             type="text"
             defaultValue="Yashu"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500"
+            autoComplete="name"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           />
         </div>
 
@@ -36,9 +38,11 @@ function ProfileSettings() {
 
           <input
             id="profile-email"
+            name="email"
             type="email"
             defaultValue="you@example.com"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500"
+            autoComplete="email"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           />
         </div>
 
@@ -53,15 +57,17 @@ function ProfileSettings() {
 
           <input
             id="profile-role"
+            name="role"
             type="text"
             defaultValue="Product Explorer"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500"
+            autoComplete="organization-title"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           />
         </div>
 
         <button
           type="button"
-          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
+          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950"
         >
           Save Profile
         </button>

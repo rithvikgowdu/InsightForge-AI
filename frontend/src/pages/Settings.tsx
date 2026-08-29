@@ -7,15 +7,18 @@ import DangerZone from "../components/settings/DangerZone";
 
 function Settings() {
   return (
-    <div className="w-full min-w-0 space-y-8">
+    <main className="w-full min-w-0 space-y-8">
 
       {/* Header */}
-      <section>
+      <section aria-labelledby="settings-title">
         <p className="text-sm font-medium text-blue-400">
           Workspace
         </p>
 
-        <h1 className="mt-2 text-3xl font-bold text-white">
+        <h1
+          id="settings-title"
+          className="mt-2 text-3xl font-bold text-white"
+        >
           Settings
         </h1>
 
@@ -27,29 +30,41 @@ function Settings() {
 
 
       {/* Profile */}
-      <ProfileSettings />
+      <section aria-label="Profile settings">
+        <ProfileSettings />
+      </section>
 
 
       {/* Preferences */}
-      <PreferencesSettings />
+      <section aria-label="Preference settings">
+        <PreferencesSettings />
+      </section>
 
 
       {/* Notifications */}
-      <NotificationSettings />
+      <section aria-label="Notification settings">
+        <NotificationSettings />
+      </section>
 
 
       {/* Data Sources */}
-      <DataSourceSettings />
+      <section aria-label="Data source settings">
+        <DataSourceSettings />
+      </section>
 
 
       {/* Security */}
-      <SecuritySettings />
+      <section aria-label="Security settings">
+        <SecuritySettings />
+      </section>
 
 
       {/* Danger Zone */}
-      <DangerZone />
+      <section aria-label="Danger zone">
+        <DangerZone />
+      </section>
 
-    </div>
+    </main>
   );
 }
 

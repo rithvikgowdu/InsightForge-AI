@@ -6,8 +6,10 @@ function ResetPassword() {
       title="Reset your password"
       subtitle="Create a new password for your InsightForge account."
     >
-      <form className="space-y-5">
-
+      <form
+        className="space-y-5"
+        aria-label="Reset password form"
+      >
         {/* New Password */}
         <div>
           <label
@@ -19,15 +21,16 @@ function ResetPassword() {
 
           <input
             id="new-password"
+            name="newPassword"
             type="password"
             placeholder="Enter a new password"
             autoComplete="new-password"
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500"
+            required
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           />
         </div>
 
-
-        {/* Confirm */}
+        {/* Confirm Password */}
         <div>
           <label
             htmlFor="reset-confirm-password"
@@ -38,22 +41,22 @@ function ResetPassword() {
 
           <input
             id="reset-confirm-password"
+            name="confirmPassword"
             type="password"
             placeholder="Confirm your new password"
             autoComplete="new-password"
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500"
+            required
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           />
         </div>
-
 
         {/* Submit */}
         <button
           type="submit"
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700"
+          className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950"
         >
           Reset Password
         </button>
-
       </form>
     </AuthLayout>
   );

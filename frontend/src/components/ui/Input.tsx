@@ -1,17 +1,15 @@
-type InputProps = {
-  placeholder?: string;
-  type?: string;
-};
+import type { InputHTMLAttributes } from "react";
+
+type InputProps = InputHTMLAttributes<HTMLInputElement>;
 
 function Input({
-  placeholder = "",
-  type = "text",
+  className = "",
+  ...props
 }: InputProps) {
   return (
     <input
-      type={type}
-      placeholder={placeholder}
-      className="
+      {...props}
+      className={`
         w-full
         rounded-xl
         border
@@ -21,10 +19,16 @@ function Input({
         py-3
         text-white
         outline-none
-        transition
+        transition-all
+        duration-200
         placeholder:text-slate-500
         focus:border-blue-500
-      "
+        focus:ring-2
+        focus:ring-blue-500/30
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+        ${className}
+      `}
     />
   );
 }

@@ -9,8 +9,7 @@ function DataSourceSettings() {
       <div className="space-y-4">
 
         {/* Reddit */}
-        <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 p-4">
-
+        <div className="flex flex-col gap-3 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-medium text-white">
               Reddit
@@ -21,16 +20,17 @@ function DataSourceSettings() {
             </p>
           </div>
 
-          <span className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-400">
+          <span
+            role="status"
+            className="w-fit rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-400"
+          >
             Connected
           </span>
-
         </div>
 
 
         {/* GitHub */}
-        <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 p-4">
-
+        <div className="flex flex-col gap-3 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-medium text-white">
               GitHub
@@ -41,13 +41,16 @@ function DataSourceSettings() {
             </p>
           </div>
 
-          <span className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-400">
+          <span
+            role="status"
+            className="w-fit rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-400"
+          >
             Connected
           </span>
-
         </div>
 
 
+        {/* Integration information */}
         <p className="pt-2 text-xs leading-5 text-slate-500">
           Source connections will be managed through the platform
           integration layer.

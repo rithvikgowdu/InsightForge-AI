@@ -1,10 +1,16 @@
 function AnalysisFilters() {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+    <section
+      aria-labelledby="analysis-filters-title"
+      className="rounded-xl border border-slate-800 bg-slate-900 p-6"
+    >
       <div className="mb-5">
-        <h3 className="text-base font-semibold text-white">
+        <h2
+          id="analysis-filters-title"
+          className="text-base font-semibold text-white"
+        >
           Analysis Filters
-        </h3>
+        </h2>
 
         <p className="mt-1 text-sm text-slate-400">
           Choose the sources and time period to analyze.
@@ -12,6 +18,7 @@ function AnalysisFilters() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+
         {/* Sources */}
         <div>
           <label
@@ -23,8 +30,9 @@ function AnalysisFilters() {
 
           <select
             id="source"
+            name="source"
             defaultValue="all"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           >
             <option value="all">
               Reddit + GitHub
@@ -40,6 +48,7 @@ function AnalysisFilters() {
           </select>
         </div>
 
+
         {/* Time Range */}
         <div>
           <label
@@ -51,8 +60,9 @@ function AnalysisFilters() {
 
           <select
             id="timeRange"
+            name="timeRange"
             defaultValue="30"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           >
             <option value="7">
               Last 7 days
@@ -72,6 +82,7 @@ function AnalysisFilters() {
           </select>
         </div>
 
+
         {/* Sort */}
         <div>
           <label
@@ -83,8 +94,9 @@ function AnalysisFilters() {
 
           <select
             id="sort"
+            name="sort"
             defaultValue="relevance"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           >
             <option value="relevance">
               Relevance
@@ -103,8 +115,9 @@ function AnalysisFilters() {
             </option>
           </select>
         </div>
+
       </div>
-    </div>
+    </section>
   );
 }
 

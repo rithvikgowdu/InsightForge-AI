@@ -6,16 +6,33 @@ function SearchBar() {
   return (
     <div className="flex flex-col gap-4 md:flex-row">
       <div className="relative flex-1">
-        <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+        <label
+          htmlFor="dashboard-search"
+          className="sr-only"
+        >
+          Search an industry
+        </label>
+
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+        >
           <FiSearch size={18} />
         </div>
 
         <div className="pl-10">
-          <Input placeholder="Search an industry (e.g., Food Delivery)" />
+          <Input
+            id="dashboard-search"
+            name="industry"
+            type="search"
+            placeholder="Search an industry (e.g., Food Delivery)"
+          />
         </div>
       </div>
 
-      <Button>Analyze</Button>
+      <Button type="button">
+        Analyze
+      </Button>
     </div>
   );
 }
