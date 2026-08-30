@@ -2,11 +2,14 @@
 __pycache__/
 *.py[cod]
 *.so
+.pytest_cache/
 
-# Virtual Environment
+# Virtual environment
+.venv/
 backend/.venv/
 
-# Environment Variables
+# Environment variables
+.env
 backend/.env
 
 # macOS
@@ -14,9 +17,6 @@ backend/.env
 
 # VS Code
 .vscode/
-
-# Python cache
-.pytest_cache/
 
 # Logs
 *.log
@@ -32,21 +32,5 @@ build/
 .coverage
 htmlcov/
 
-# Database
-*.sqlite3# Environment variables
-.env
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environment
-.venv/
-
-# IDE
-.vscode/
-
-# OS
-.DS_Store
-Thumbs.db
+# Local databases
+*.sqlite3
