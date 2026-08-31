@@ -93,7 +93,15 @@ function Analysis() {
       setLoading(false);
     }
   };
-
+const cleanSummary = (summary: string) => {
+  return summary
+    .replace(/\*\*/g, "")
+    .replace(/^Title:\s*/gm, "Title: ")
+    .replace(/^Summary:\s*/gm, "Summary: ")
+    .replace(/^Possible Causes:\s*/gm, "Possible Causes: ")
+    .replace(/^\s*[-*]\s*/gm, "• ")
+    .trim();
+};
   const clusters: ClusterResult[] = Array.isArray(result?.results)
   ? result.results
   : result?.results &&
@@ -340,8 +348,8 @@ function Analysis() {
                         </h4>
 
                         <p style={styles.bodyText}>
-                          {cluster.summary}
-                        </p>
+  {cleanSummary(cluster.summary)}
+</p>
                       </div>
 
                       <div style={styles.opportunitySection}>

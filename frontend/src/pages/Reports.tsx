@@ -23,6 +23,94 @@ interface Opportunity {
   confidence_score?: number;
 }
 
+interface ParsedSummary {
+  title: string;
+  summary: string;
+  causes: string[];
+}
+
+function parseSummary(summary: string): ParsedSummary {
+  const cleaned = summary
+    .replace(/\r\n/g, "\n")
+    .replace(/\*\*/g, "")
+    .replace(/__/g, "")
+    .replace(/#{1,6}\s*/g, "")
+    .trim();
+
+  let title = "";
+  let summaryText = "";
+  const causes: string[] = [];
+
+  const titleMatch = cleaned.match(
+    /Title:\s*(.*?)(?=\s*Summary:|\s*Possible Causes:|$)/i
+  );
+
+  if (titleMatch) {
+    title = titleMatch[1].trim();
+  }
+
+  const summaryMatch = cleaned.match(
+    /Summary:\s*(.*?)(?=\s*Possible Causes:|$)/is
+  );
+
+  if (summaryMatch) {
+    summaryText = summaryMatch[1].trim();
+  }
+
+  const causesMatch = cleaned.match(
+    /Possible Causes:\s*(.*)$/is
+  );
+
+  if (causesMatch) {
+    const causesText = causesMatch[1].trim();
+
+    const bulletMatches = causesText.match(
+      /(?:^|\n|\s)(?:[•*-]|\d+\.)\s+(.+?)(?=(?:\n|\s)(?:[•*-]|\d+\.)\s+|$)/g
+    );
+
+    if (bulletMatches) {
+      bulletMatches.forEach((item) => {
+        const cleanedItem = item
+          .replace(/^\s*(?:[•*-]|\d+\.)\s*/, "")
+          .trim();
+
+        if (cleanedItem) {
+          causes.push(cleanedItem);
+        }
+      });
+    } else {
+      const parts = causesText
+        .split(/(?=\+\s+)/)
+        .map((item) =>
+          item
+            .replace(/^\s*[\+\-•*]\s*/, "")
+            .trim()
+        )
+        .filter(Boolean);
+
+      causes.push(...parts);
+    }
+  }
+
+  if (!title && !summaryText && causes.length === 0) {
+    const fallback = cleaned
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return {
+      title: "",
+      summary: fallback,
+      causes: [],
+    };
+  }
+
+  return {
+    title,
+    summary: summaryText,
+    causes,
+  };
+}
+
 function Reports() {
   const [history, setHistory] = useState<
     AnalysisHistoryResponse[]
@@ -52,6 +140,7 @@ function Reports() {
         setHistory(sorted);
       } catch (err) {
         console.error("Failed to load reports:", err);
+
         setError(
           "Unable to load analysis reports. Please try again."
         );
@@ -71,8 +160,15 @@ function Reports() {
       const report = await getAnalysisById(analysisId);
 
       setSelectedReport(report);
+
+      window.history.replaceState(
+        {},
+        "",
+        `/reports?id=${analysisId}`
+      );
     } catch (err) {
       console.error("Failed to load report:", err);
+
       setError(
         "Unable to load this report. Please try again."
       );
@@ -82,20 +178,28 @@ function Reports() {
   };
 
   const closeReport = () => {
-  setSelectedReport(null);
-  window.history.replaceState({}, "", "/reports");
-};
-useEffect(() => {
-  const id = new URLSearchParams(window.location.search).get("id");
+    setSelectedReport(null);
 
-  if (id) {
-    const analysisId = Number(id);
+    window.history.replaceState(
+      {},
+      "",
+      "/reports"
+    );
+  };
 
-    if (!Number.isNaN(analysisId)) {
-      openReport(analysisId);
+  useEffect(() => {
+    const id = new URLSearchParams(
+      window.location.search
+    ).get("id");
+
+    if (id) {
+      const analysisId = Number(id);
+
+      if (!Number.isNaN(analysisId)) {
+        openReport(analysisId);
+      }
     }
-  }
-}, []);
+  }, []);
 
   const getClusters = (
     report: AnalysisResponse
@@ -128,20 +232,28 @@ useEffect(() => {
       <div style={styles.page}>
         <div style={styles.header}>
           <div>
-            <p style={styles.eyebrow}>INSIGHTFORGE AI</p>
+            <p style={styles.eyebrow}>
+              INSIGHTFORGE AI
+            </p>
 
-            <h1 style={styles.title}>Reports</h1>
+            <h1 style={styles.title}>
+              Reports
+            </h1>
 
             <p style={styles.subtitle}>
-              Review previous repository analyses and explore
-              the product opportunities discovered by InsightForge AI.
+              Review previous repository analyses and
+              explore the product opportunities discovered
+              by InsightForge AI.
             </p>
           </div>
         </div>
 
         {error && (
           <div style={styles.error}>
-            <strong>Something went wrong</strong>
+            <strong>
+              Something went wrong
+            </strong>
+
             <span>{error}</span>
           </div>
         )}
@@ -157,90 +269,103 @@ useEffect(() => {
             <h2>No reports yet</h2>
 
             <p>
-              Run a repository analysis to generate your first
-              report.
+              Run a repository analysis to generate your
+              first report.
             </p>
           </div>
         )}
 
-        {!loading && history.length > 0 && !selectedReport && (
-          <section>
-            <div style={styles.sectionHeader}>
-              <div>
-                <h2 style={styles.sectionTitle}>
-                  Analysis History
-                </h2>
+        {!loading &&
+          history.length > 0 &&
+          !selectedReport && (
+            <section>
+              <div style={styles.sectionHeader}>
+                <div>
+                  <h2 style={styles.sectionTitle}>
+                    Analysis History
+                  </h2>
 
-                <p style={styles.sectionSubtitle}>
-                  Your previously generated repository analyses.
-                </p>
+                  <p style={styles.sectionSubtitle}>
+                    Your previously generated repository
+                    analyses.
+                  </p>
+                </div>
+
+                <span style={styles.countBadge}>
+                  {history.length}{" "}
+                  {history.length === 1
+                    ? "report"
+                    : "reports"}
+                </span>
               </div>
 
-              <span style={styles.countBadge}>
-                {history.length}{" "}
-                {history.length === 1
-                  ? "report"
-                  : "reports"}
-              </span>
-            </div>
-
-            <div style={styles.reportList}>
-              {history.map((report) => (
-                <article
-                  key={report.id}
-                  style={styles.reportCard}
-                >
-                  <div>
-                    <p style={styles.repositoryLabel}>
-                      REPOSITORY
-                    </p>
-
-                    <h3 style={styles.repository}>
-                      {report.repository}
-                    </h3>
-
-                    <div style={styles.meta}>
-                      <span
-                        style={{
-                          ...styles.status,
-                          ...(report.status === "completed"
-                            ? styles.completed
-                            : styles.otherStatus),
-                        }}
+              <div style={styles.reportList}>
+                {history.map((report) => (
+                  <article
+                    key={report.id}
+                    style={styles.reportCard}
+                  >
+                    <div>
+                      <p
+                        style={
+                          styles.repositoryLabel
+                        }
                       >
-                        {report.status}
-                      </span>
+                        REPOSITORY
+                      </p>
 
-                      <span>
-                        {report.total_clusters}{" "}
-                        {report.total_clusters === 1
-                          ? "cluster"
-                          : "clusters"}
-                      </span>
+                      <h3 style={styles.repository}>
+                        {report.repository}
+                      </h3>
 
-                      <span>
-                        {new Date(
-                          report.created_at
-                        ).toLocaleString()}
-                      </span>
+                      <div style={styles.meta}>
+                        <span
+                          style={{
+                            ...styles.status,
+                            ...(report.status ===
+                            "completed"
+                              ? styles.completed
+                              : styles.otherStatus),
+                          }}
+                        >
+                          {report.status}
+                        </span>
+
+                        <span>
+                          {report.total_clusters}{" "}
+                          {report.total_clusters === 1
+                            ? "cluster"
+                            : "clusters"}
+                        </span>
+
+                        <span>
+                          {new Date(
+                            report.created_at
+                          ).toLocaleString()}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  {report.status === "completed" && (
-  <button
-    type="button"
-    onClick={() => openReport(report.id)}
-    disabled={loadingReport}
-    style={styles.viewButton}
-  >
-    {loadingReport ? "Loading..." : "View Report"}
-  </button>
-)}
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
+                    {report.status ===
+                      "completed" && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openReport(report.id)
+                        }
+                        disabled={loadingReport}
+                        style={styles.viewButton}
+                      >
+                        {loadingReport
+                          ? "Loading..."
+                          : "View Report"}
+                      </button>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
 
         {selectedReport && (
           <section>
@@ -254,15 +379,17 @@ useEffect(() => {
 
             <div style={styles.reportHeader}>
               <div>
-                <p style={styles.eyebrow}>ANALYSIS REPORT</p>
+                <p style={styles.eyebrow}>
+                  ANALYSIS REPORT
+                </p>
 
                 <h2 style={styles.reportTitle}>
                   {selectedReport.repository}
                 </h2>
 
                 <p style={styles.reportSubtitle}>
-                  AI-generated insights from repository issue
-                  analysis.
+                  AI-generated insights from repository
+                  issue analysis.
                 </p>
               </div>
 
@@ -297,7 +424,9 @@ useEffect(() => {
                   Report ID
                 </span>
 
-                <strong>#{selectedReport.id}</strong>
+                <strong>
+                  #{selectedReport.id}
+                </strong>
               </div>
             </div>
 
@@ -308,173 +437,356 @@ useEffect(() => {
                 </h2>
 
                 <p style={styles.sectionSubtitle}>
-                  Recurring issues transformed into actionable
-                  opportunities.
+                  Recurring issues transformed into
+                  actionable opportunities.
                 </p>
               </div>
             </div>
 
             <div style={styles.clusterList}>
-              {getClusters(selectedReport).map((cluster) => {
-                const opportunity =
-                  cluster.opportunity as Opportunity;
+              {getClusters(selectedReport).map(
+                (cluster) => {
+                  const opportunity =
+                    cluster.opportunity as Opportunity;
 
-                const confidence =
-                  typeof opportunity.confidence_score ===
-                  "number"
-                    ? Math.round(
-                        opportunity.confidence_score * 100
-                      )
-                    : null;
+                  const parsedSummary =
+                    parseSummary(
+                      cluster.summary
+                    );
 
-                return (
-                  <article
-                    key={cluster.cluster}
-                    style={styles.clusterCard}
-                  >
-                    <div style={styles.clusterHeader}>
-                      <div>
-                        <span style={styles.clusterLabel}>
-                          CLUSTER {cluster.cluster}
-                        </span>
+                  const confidence =
+                    typeof opportunity.confidence_score ===
+                    "number"
+                      ? Math.round(
+                          opportunity.confidence_score *
+                            100
+                        )
+                      : null;
 
-                        <h3 style={styles.clusterTitle}>
-                          {cluster.documents}{" "}
-                          {cluster.documents === 1
-                            ? "document"
-                            : "documents"}
-                        </h3>
+                  return (
+                    <article
+                      key={cluster.cluster}
+                      style={styles.clusterCard}
+                    >
+                      <div
+                        style={
+                          styles.clusterHeader
+                        }
+                      >
+                        <div>
+                          <span
+                            style={
+                              styles.clusterLabel
+                            }
+                          >
+                            CLUSTER{" "}
+                            {cluster.cluster}
+                          </span>
+
+                          <h3
+                            style={
+                              styles.clusterTitle
+                            }
+                          >
+                            {cluster.documents}{" "}
+                            {cluster.documents === 1
+                              ? "document"
+                              : "documents"}
+                          </h3>
+                        </div>
+
+                        {opportunity.market_potential && (
+                          <span
+                            style={{
+                              ...styles.marketBadge,
+                              ...(opportunity.market_potential ===
+                              "High"
+                                ? styles.high
+                                : opportunity.market_potential ===
+                                    "Medium"
+                                  ? styles.medium
+                                  : styles.low),
+                            }}
+                          >
+                            {
+                              opportunity.market_potential
+                            }{" "}
+                            Market
+                          </span>
+                        )}
                       </div>
 
-                      {opportunity.market_potential && (
-                        <span
-                          style={{
-                            ...styles.marketBadge,
-                            ...(opportunity.market_potential ===
-                            "High"
-                              ? styles.high
-                              : opportunity.market_potential ===
-                                  "Medium"
-                                ? styles.medium
-                                : styles.low),
-                          }}
+                      <div
+                        style={
+                          styles.summaryBox
+                        }
+                      >
+                        <h4
+                          style={styles.heading}
                         >
-                          {opportunity.market_potential} Market
-                        </span>
-                      )}
-                    </div>
-
-                    <div style={styles.summaryBox}>
-                      <h4 style={styles.heading}>
-                        Issue Summary
-                      </h4>
-
-                      <p style={styles.text}>
-                        {cluster.summary}
-                      </p>
-                    </div>
-
-                    <div style={styles.content}>
-                      <div style={styles.opportunityBox}>
-                        <h4 style={styles.opportunityHeading}>
-                          💡 Product Opportunity
+                          Issue Summary
                         </h4>
 
-                        <p style={styles.text}>
-                          {opportunity.business_opportunity ||
-                            "Not available"}
-                        </p>
-                      </div>
+                        {parsedSummary.title && (
+                          <div
+                            style={
+                              styles.summarySection
+                            }
+                          >
+                            <span
+                              style={
+                                styles.summarySubheading
+                              }
+                            >
+                              Title
+                            </span>
 
-                      <div style={styles.detailsGrid}>
-                        <div>
-                          <h4 style={styles.heading}>
-                            Problem Statement
-                          </h4>
+                            <p
+                              style={
+                                styles.text
+                              }
+                            >
+                              {
+                                parsedSummary.title
+                              }
+                            </p>
+                          </div>
+                        )}
 
-                          <p style={styles.text}>
-                            {opportunity.problem_statement ||
-                              "Not available"}
-                          </p>
-                        </div>
+                        {parsedSummary.summary && (
+                          <div
+                            style={
+                              styles.summarySection
+                            }
+                          >
+                            <span
+                              style={
+                                styles.summarySubheading
+                              }
+                            >
+                              Summary
+                            </span>
 
-                        <div>
-                          <h4 style={styles.heading}>
-                            AI Solution
-                          </h4>
+                            <p
+                              style={
+                                styles.text
+                              }
+                            >
+                              {
+                                parsedSummary.summary
+                              }
+                            </p>
+                          </div>
+                        )}
 
-                          <p style={styles.text}>
-                            {opportunity.ai_solution ||
-                              "Not available"}
-                          </p>
-                        </div>
+                        {parsedSummary.causes.length >
+                          0 && (
+                          <div
+                            style={
+                              styles.summarySection
+                            }
+                          >
+                            <span
+                              style={
+                                styles.summarySubheading
+                              }
+                            >
+                              Possible Causes
+                            </span>
 
-                        <div>
-                          <h4 style={styles.heading}>
-                            Target Customers
-                          </h4>
-
-                          <p style={styles.text}>
-                            {opportunity.target_customers ||
-                              "Not available"}
-                          </p>
-                        </div>
-
-                        <div>
-                          <h4 style={styles.heading}>
-                            MVP Features
-                          </h4>
-
-                          {Array.isArray(
-                            opportunity.mvp_features
-                          ) ? (
-                            <ul style={styles.featureList}>
-                              {opportunity.mvp_features.map(
-                                (feature, index) => (
-                                  <li key={index}>
-                                    {feature}
+                            <ul
+                              style={
+                                styles.causesList
+                              }
+                            >
+                              {parsedSummary.causes.map(
+                                (
+                                  cause,
+                                  index
+                                ) => (
+                                  <li
+                                    key={index}
+                                  >
+                                    {cause}
                                   </li>
                                 )
                               )}
                             </ul>
-                          ) : (
-                            <p style={styles.text}>
-                              Not available
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div style={styles.confidence}>
-                        <div>
-                          <span style={styles.heading}>
-                            Confidence
-                          </span>
-
-                          <strong>
-                            {confidence !== null
-                              ? `${confidence}%`
-                              : "N/A"}
-                          </strong>
-                        </div>
-
-                        {confidence !== null && (
-                          <div
-                            style={styles.progressBackground}
-                          >
-                            <div
-                              style={{
-                                ...styles.progress,
-                                width: `${confidence}%`,
-                              }}
-                            />
                           </div>
                         )}
                       </div>
-                    </div>
-                  </article>
-                );
-              })}
+
+                      <div style={styles.content}>
+                        <div
+                          style={
+                            styles.opportunityBox
+                          }
+                        >
+                          <h4
+                            style={
+                              styles.opportunityHeading
+                            }
+                          >
+                            💡 Product Opportunity
+                          </h4>
+
+                          <p
+                            style={styles.text}
+                          >
+                            {opportunity.business_opportunity ||
+                              "Not available"}
+                          </p>
+                        </div>
+
+                        <div
+                          style={
+                            styles.detailsGrid
+                          }
+                        >
+                          <div>
+                            <h4
+                              style={
+                                styles.heading
+                              }
+                            >
+                              Problem Statement
+                            </h4>
+
+                            <p
+                              style={
+                                styles.text
+                              }
+                            >
+                              {opportunity.problem_statement ||
+                                "Not available"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <h4
+                              style={
+                                styles.heading
+                              }
+                            >
+                              AI Solution
+                            </h4>
+
+                            <p
+                              style={
+                                styles.text
+                              }
+                            >
+                              {opportunity.ai_solution ||
+                                "Not available"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <h4
+                              style={
+                                styles.heading
+                              }
+                            >
+                              Target Customers
+                            </h4>
+
+                            <p
+                              style={
+                                styles.text
+                              }
+                            >
+                              {opportunity.target_customers ||
+                                "Not available"}
+                            </p>
+                          </div>
+
+                          <div>
+                            <h4
+                              style={
+                                styles.heading
+                              }
+                            >
+                              MVP Features
+                            </h4>
+
+                            {Array.isArray(
+                              opportunity.mvp_features
+                            ) ? (
+                              <ul
+                                style={
+                                  styles.featureList
+                                }
+                              >
+                                {opportunity.mvp_features.map(
+                                  (
+                                    feature,
+                                    index
+                                  ) => (
+                                    <li
+                                      key={index}
+                                    >
+                                      {feature}
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            ) : (
+                              <p
+                                style={
+                                  styles.text
+                                }
+                              >
+                                Not available
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div
+                          style={
+                            styles.confidence
+                          }
+                        >
+                          <div
+                            style={
+                              styles.confidenceHeader
+                            }
+                          >
+                            <span
+                              style={
+                                styles.heading
+                              }
+                            >
+                              Confidence
+                            </span>
+
+                            <strong>
+                              {confidence !== null
+                                ? `${confidence}%`
+                                : "N/A"}
+                            </strong>
+                          </div>
+
+                          {confidence !== null && (
+                            <div
+                              style={
+                                styles.progressBackground
+                              }
+                            >
+                              <div
+                                style={{
+                                  ...styles.progress,
+                                  width: `${confidence}%`,
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  );
+                }
+              )}
             </div>
           </section>
         )}
@@ -560,7 +872,8 @@ const styles: Record<string, CSSProperties> = {
     background: "#ffffff",
     border: "1px solid #e2e8f0",
     borderRadius: "14px",
-    boxShadow: "0 4px 15px rgba(15, 23, 42, 0.04)",
+    boxShadow:
+      "0 4px 15px rgba(15, 23, 42, 0.04)",
   },
 
   repositoryLabel: {
@@ -654,7 +967,8 @@ const styles: Record<string, CSSProperties> = {
 
   summaryGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
+    gridTemplateColumns:
+      "repeat(3, 1fr)",
     gap: "15px",
     marginBottom: "35px",
   },
@@ -693,7 +1007,8 @@ const styles: Record<string, CSSProperties> = {
     border: "1px solid #e2e8f0",
     borderRadius: "15px",
     overflow: "hidden",
-    boxShadow: "0 5px 20px rgba(15, 23, 42, 0.04)",
+    boxShadow:
+      "0 5px 20px rgba(15, 23, 42, 0.04)",
   },
 
   clusterHeader: {
@@ -701,7 +1016,8 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: "space-between",
     alignItems: "center",
     padding: "20px 22px",
-    borderBottom: "1px solid #e2e8f0",
+    borderBottom:
+      "1px solid #e2e8f0",
   },
 
   clusterLabel: {
@@ -743,6 +1059,28 @@ const styles: Record<string, CSSProperties> = {
     background: "#f8fafc",
   },
 
+  summarySection: {
+    marginTop: "12px",
+  },
+
+  summarySubheading: {
+    display: "block",
+    marginBottom: "5px",
+    fontSize: "10px",
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: ".6px",
+    color: "#64748b",
+  },
+
+  causesList: {
+    margin: "0",
+    paddingLeft: "20px",
+    color: "#475569",
+    fontSize: "13px",
+    lineHeight: 1.65,
+  },
+
   content: {
     padding: "22px",
   },
@@ -752,7 +1090,8 @@ const styles: Record<string, CSSProperties> = {
     marginBottom: "22px",
     borderRadius: "10px",
     background: "#eff6ff",
-    border: "1px solid #dbeafe",
+    border:
+      "1px solid #dbeafe",
   },
 
   opportunityHeading: {
@@ -778,7 +1117,8 @@ const styles: Record<string, CSSProperties> = {
 
   detailsGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    gridTemplateColumns:
+      "1fr 1fr",
     gap: "22px",
   },
 
@@ -793,7 +1133,14 @@ const styles: Record<string, CSSProperties> = {
   confidence: {
     marginTop: "22px",
     paddingTop: "20px",
-    borderTop: "1px solid #e2e8f0",
+    borderTop:
+      "1px solid #e2e8f0",
+  },
+
+  confidenceHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
   },
 
   progressBackground: {
