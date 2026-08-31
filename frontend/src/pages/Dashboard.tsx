@@ -1,3 +1,5 @@
+import { useAuth } from "../context/AuthContext";
+
 import SearchBar from "../components/dashboard/SearchBar";
 import StatsCard from "../components/dashboard/StatsCard";
 import ComplaintCard from "../components/dashboard/ComplaintCard";
@@ -9,6 +11,8 @@ import OpportunityCard from "../components/dashboard/OpportunityCard";
 import RecentSearches from "../components/dashboard/RecentSearches";
 
 function Dashboard() {
+  const { user } = useAuth();
+
   const trendData = [
     { month: "May", mentions: 620 },
     { month: "Jun", mentions: 780 },
@@ -19,6 +23,23 @@ function Dashboard() {
   return (
     <main className="w-full min-w-0 space-y-8">
 
+      {/* Welcome */}
+      <section>
+        <p className="text-sm font-medium text-blue-400">
+          Product Intelligence
+        </p>
+
+        <h1 className="mt-2 text-3xl font-bold text-white">
+          Welcome back{user?.username ? `, ${user.username}` : ""}
+        </h1>
+
+        <p className="mt-2 max-w-2xl text-slate-400">
+          Discover customer problems, emerging trends, feature
+          requests, and product opportunities with InsightForge AI.
+        </p>
+      </section>
+
+
       {/* Search */}
       <section aria-label="Dashboard search">
         <SearchBar />
@@ -27,11 +48,15 @@ function Dashboard() {
 
       {/* Overview */}
       <section aria-labelledby="overview-title">
-        <h2 id="overview-title" className="sr-only">
+        <h2
+          id="overview-title"
+          className="sr-only"
+        >
           Dashboard Overview
         </h2>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+
           <StatsCard
             title="Total Analyses"
             value="325"
@@ -46,6 +71,7 @@ function Dashboard() {
             title="Trending Topics"
             value="41"
           />
+
         </div>
       </section>
 

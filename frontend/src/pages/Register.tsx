@@ -1,6 +1,73 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/auth/AuthLayout";
+import { register } from "../services/api";
 
 function Register() {
+  const navigate = useNavigate();
+
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
+
+  const [terms, setTerms] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    setError("");
+
+    if (
+      !username.trim() ||
+      !email.trim() ||
+      !password ||
+      !confirmPassword
+    ) {
+      setError("Please complete all fields.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (!terms) {
+      setError(
+        "Please agree to the terms of service and privacy policy."
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await register({
+        username: username.trim(),
+        email: email.trim(),
+        password,
+      });
+
+      navigate("/login", {
+        replace: true,
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to create your account."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <AuthLayout
       title="Create your account"
@@ -8,24 +75,28 @@ function Register() {
     >
       <form
         className="space-y-5"
-        aria-label="Create account form"
+        onSubmit={handleSubmit}
       >
 
-        {/* Name */}
+        {/* Username */}
         <div>
           <label
-            htmlFor="register-name"
+            htmlFor="register-username"
             className="mb-2 block text-sm font-medium text-slate-300"
           >
-            Full name
+            Username
           </label>
 
           <input
-            id="register-name"
-            name="name"
+            id="register-username"
             type="text"
-            placeholder="Your name"
-            autoComplete="name"
+            value={username}
+            onChange={(event) => {
+              setUsername(event.target.value);
+              setError("");
+            }}
+            placeholder="Choose a username"
+            autoComplete="username"
             required
             className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           />
@@ -43,8 +114,12 @@ function Register() {
 
           <input
             id="register-email"
-            name="email"
             type="email"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setError("");
+            }}
             placeholder="you@example.com"
             autoComplete="email"
             required
@@ -64,8 +139,12 @@ function Register() {
 
           <input
             id="register-password"
-            name="password"
             type="password"
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              setError("");
+            }}
             placeholder="Create a password"
             autoComplete="new-password"
             required
@@ -85,8 +164,12 @@ function Register() {
 
           <input
             id="confirm-password"
-            name="confirmPassword"
             type="password"
+            value={confirmPassword}
+            onChange={(event) => {
+              setConfirmPassword(event.target.value);
+              setError("");
+            }}
             placeholder="Confirm your password"
             autoComplete="new-password"
             required
@@ -100,10 +183,12 @@ function Register() {
 
           <input
             id="terms"
-            name="terms"
             type="checkbox"
-            required
-            className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-900 text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            checked={terms}
+            onChange={(event) =>
+              setTerms(event.target.checked)
+            }
+            className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
           />
 
           <label
@@ -116,12 +201,26 @@ function Register() {
         </div>
 
 
+        {/* Error */}
+        {error && (
+          <div
+            role="alert"
+            className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+          >
+            {error}
+          </div>
+        )}
+
+
         {/* Submit */}
         <button
           type="submit"
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+          disabled={loading}
+          className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Create Account
+          {loading
+            ? "Creating Account..."
+            : "Create Account"}
         </button>
 
 
@@ -132,7 +231,8 @@ function Register() {
 
           <button
             type="button"
-            className="font-medium text-blue-400 transition hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 focus:ring-offset-slate-950"
+            onClick={() => navigate("/login")}
+            className="rounded font-medium text-blue-400 transition hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
           >
             Sign in
           </button>

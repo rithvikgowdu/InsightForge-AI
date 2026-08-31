@@ -22,15 +22,12 @@ function Analysis() {
     <main className="w-full min-w-0 space-y-8">
 
       {/* Page Header */}
-      <section aria-labelledby="analysis-title">
+      <section>
         <p className="text-sm font-medium text-blue-400">
           Product Intelligence
         </p>
 
-        <h1
-          id="analysis-title"
-          className="mt-2 text-3xl font-bold text-white"
-        >
+        <h1 className="mt-2 text-3xl font-bold text-white">
           Analysis
         </h1>
 
@@ -55,55 +52,47 @@ function Analysis() {
 
 
       {/* Summary */}
-      <section aria-label="Analysis summary">
-        <AnalysisSummary
-          industry={analysisSummary.industry}
-          totalMentions={analysisSummary.totalMentions}
-          complaintClusters={analysisSummary.complaintClusters}
-          featureRequests={analysisSummary.featureRequests}
-          opportunities={analysisSummary.opportunities}
-        />
-      </section>
+      <AnalysisSummary
+        industry={analysisSummary.industry}
+        totalMentions={analysisSummary.totalMentions}
+        complaintClusters={analysisSummary.complaintClusters}
+        featureRequests={analysisSummary.featureRequests}
+        opportunities={analysisSummary.opportunities}
+      />
 
 
       {/* Complaint Clusters */}
-      <section aria-label="Complaint clusters">
-        <ComplaintClusters />
-      </section>
+      <ComplaintClusters />
 
 
       {/* Complaint Details */}
-      <section aria-label="Complaint details">
-        <ComplaintDetailsSection />
-      </section>
+      <ComplaintDetailsSection />
 
 
       {/* Intelligence */}
-      <section aria-label="Analysis intelligence">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
-          <SentimentOverview
-            negative={68}
-            neutral={22}
-            positive={10}
-          />
+        <SentimentOverview
+          negative={68}
+          neutral={22}
+          positive={10}
+        />
 
-          <ClassificationBreakdown />
+        <ClassificationBreakdown />
 
-          <FeatureRequestList />
+        <FeatureRequestList />
 
-          <TrendIntelligence />
+        <TrendIntelligence />
 
-          <OpportunityIntelligence />
+        <OpportunityIntelligence />
 
-        </div>
-      </section>
+      </div>
 
 
       {/* Empty State */}
       <section
         aria-labelledby="start-analysis-title"
-        className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-8 text-center sm:p-12"
+        className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-12 text-center"
       >
         <h2
           id="start-analysis-title"

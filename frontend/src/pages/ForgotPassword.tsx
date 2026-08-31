@@ -1,6 +1,20 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/auth/AuthLayout";
 
 function ForgotPassword() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+
+  function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    // Password reset API is not available in the current backend.
+    // Keep the form ready for backend integration.
+  }
+
   return (
     <AuthLayout
       title="Forgot your password?"
@@ -8,9 +22,9 @@ function ForgotPassword() {
     >
       <form
         className="space-y-5"
-        aria-label="Password reset request form"
+        onSubmit={handleSubmit}
       >
-        {/* Email */}
+
         <div>
           <label
             htmlFor="forgot-email"
@@ -23,6 +37,10 @@ function ForgotPassword() {
             id="forgot-email"
             name="email"
             type="email"
+            value={email}
+            onChange={(event) =>
+              setEmail(event.target.value)
+            }
             placeholder="you@example.com"
             autoComplete="email"
             required
@@ -30,7 +48,6 @@ function ForgotPassword() {
           />
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950"
@@ -38,13 +55,14 @@ function ForgotPassword() {
           Send Reset Link
         </button>
 
-        {/* Back */}
         <button
           type="button"
-          className="w-full text-sm font-medium text-slate-400 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:ring-offset-2 focus:ring-offset-slate-950"
+          onClick={() => navigate("/login")}
+          className="w-full rounded-lg py-2 text-sm font-medium text-slate-400 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
         >
           ← Back to Sign In
         </button>
+
       </form>
     </AuthLayout>
   );

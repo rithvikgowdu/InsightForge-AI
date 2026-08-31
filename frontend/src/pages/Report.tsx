@@ -20,69 +20,43 @@ function Report() {
   return (
     <main className="w-full min-w-0 space-y-8">
 
-      {/* Report Header */}
-      <section aria-label="Report header">
-        <ReportHeader
-          title={report.title}
-          industry={report.industry}
-          generatedAt={report.generatedAt}
-        />
-      </section>
+      {/* Header */}
+      <ReportHeader
+        title={report.title}
+        industry={report.industry}
+        generatedAt={report.generatedAt}
+      />
 
-
-      {/* Report Metadata */}
-      <section aria-label="Report metadata">
-        <ReportMetadata
-          sources={["Reddit", "GitHub"]}
-          timeRange="Last 30 days"
-          totalMentions={1284}
-          clusters={42}
-        />
-      </section>
-
+      {/* Metadata */}
+      <ReportMetadata
+        sources={["Reddit", "GitHub"]}
+        timeRange="Last 30 days"
+        totalMentions={1284}
+        clusters={42}
+      />
 
       {/* Executive Summary */}
-      <section aria-label="Executive summary">
-        <ExecutiveSummary
-          summary={report.summary}
-        />
-      </section>
-
+      <ExecutiveSummary
+        summary={report.summary}
+      />
 
       {/* Key Findings */}
-      <section aria-label="Key findings">
-        <KeyFindings />
-      </section>
+      <KeyFindings />
 
+      {/* Problems */}
+      <ReportProblems />
 
-      {/* Customer Problems */}
-      <section aria-label="Customer problems">
-        <ReportProblems />
-      </section>
-
-
-      {/* Emerging Trends */}
-      <section aria-label="Report trends">
-        <ReportTrends />
-      </section>
-
+      {/* Trends */}
+      <ReportTrends />
 
       {/* Feature Requests */}
-      <section aria-label="Feature requests">
-        <ReportFeatureRequests />
-      </section>
-
+      <ReportFeatureRequests />
 
       {/* Opportunities */}
-      <section aria-label="Product opportunities">
-        <ReportOpportunities />
-      </section>
-
+      <ReportOpportunities />
 
       {/* Recommended MVP */}
-      <section aria-label="Recommended MVP">
-        <RecommendedMVP />
-      </section>
+      <RecommendedMVP />
 
     </main>
   );

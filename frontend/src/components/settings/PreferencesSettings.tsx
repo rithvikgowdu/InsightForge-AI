@@ -1,6 +1,19 @@
+import { useState } from "react";
 import SettingsSection from "./SettingsSection";
 
 function PreferencesSettings() {
+  const [source, setSource] = useState("all");
+  const [timeRange, setTimeRange] = useState("30");
+  const [saved, setSaved] = useState(false);
+
+  function handleSave() {
+    setSaved(true);
+
+    window.setTimeout(() => {
+      setSaved(false);
+    }, 2500);
+  }
+
   return (
     <SettingsSection
       title="Preferences"
@@ -19,8 +32,12 @@ function PreferencesSettings() {
 
           <select
             id="default-source"
-            defaultValue="all"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500"
+            value={source}
+            onChange={(event) => {
+              setSource(event.target.value);
+              setSaved(false);
+            }}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           >
             <option value="all">
               Reddit + GitHub
@@ -48,8 +65,12 @@ function PreferencesSettings() {
 
           <select
             id="default-time-range"
-            defaultValue="30"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500"
+            value={timeRange}
+            onChange={(event) => {
+              setTimeRange(event.target.value);
+              setSaved(false);
+            }}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           >
             <option value="7">
               Last 7 days
@@ -66,9 +87,21 @@ function PreferencesSettings() {
         </div>
 
 
+        {/* Feedback */}
+        {saved && (
+          <p
+            role="status"
+            className="rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-400"
+          >
+            Preferences saved locally for this session.
+          </p>
+        )}
+
+
         <button
           type="button"
-          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
+          onClick={handleSave}
+          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
         >
           Save Preferences
         </button>

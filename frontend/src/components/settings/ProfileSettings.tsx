@@ -1,6 +1,20 @@
+import { useState } from "react";
 import SettingsSection from "./SettingsSection";
 
 function ProfileSettings() {
+  const [name, setName] = useState("Yashu");
+  const [email, setEmail] = useState("you@example.com");
+  const [role, setRole] = useState("Product Explorer");
+  const [saved, setSaved] = useState(false);
+
+  function handleSave() {
+    setSaved(true);
+
+    window.setTimeout(() => {
+      setSaved(false);
+    }, 2500);
+  }
+
   return (
     <SettingsSection
       title="Profile"
@@ -19,11 +33,13 @@ function ProfileSettings() {
 
           <input
             id="profile-name"
-            name="name"
             type="text"
-            defaultValue="Yashu"
-            autoComplete="name"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+            value={name}
+            onChange={(event) => {
+              setName(event.target.value);
+              setSaved(false);
+            }}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           />
         </div>
 
@@ -38,11 +54,13 @@ function ProfileSettings() {
 
           <input
             id="profile-email"
-            name="email"
             type="email"
-            defaultValue="you@example.com"
-            autoComplete="email"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setSaved(false);
+            }}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           />
         </div>
 
@@ -57,17 +75,30 @@ function ProfileSettings() {
 
           <input
             id="profile-role"
-            name="role"
             type="text"
-            defaultValue="Product Explorer"
-            autoComplete="organization-title"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+            value={role}
+            onChange={(event) => {
+              setRole(event.target.value);
+              setSaved(false);
+            }}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           />
         </div>
 
+        {/* Feedback */}
+        {saved && (
+          <p
+            role="status"
+            className="rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-400"
+          >
+            Profile changes saved locally for this session.
+          </p>
+        )}
+
         <button
           type="button"
-          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+          onClick={handleSave}
+          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
         >
           Save Profile
         </button>
