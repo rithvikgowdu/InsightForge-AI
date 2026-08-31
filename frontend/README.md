@@ -1,32 +1,49 @@
-# React + TypeScript + Vite
+# InsightForge AI
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+InsightForge AI is an AI-powered product intelligence platform that analyzes issues from public GitHub repositories and transforms recurring user problems into actionable product opportunities.
 
-Currently, two official plugins are available:
+The application combines GitHub issue data, semantic embeddings, HDBSCAN clustering, local LLMs through Ollama, and PostgreSQL persistence to produce structured product insights.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- GitHub repository issue analysis
+- Automatic issue preprocessing
+- Semantic embeddings using Nomic Embed Text
+- HDBSCAN-based issue clustering
+- AI-generated cluster summaries
+- AI-generated business opportunities
+- AI solution recommendations
+- Target customer identification
+- MVP feature recommendations
+- Market potential estimation
+- Confidence scoring
+- Persistent analysis history
+- Dashboard statistics
+- Detailed analysis reports
+- Authentication
+- Background analysis processing
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Analysis Workflow
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+```text
+GitHub Repository
+        ↓
+GitHub Issues
+        ↓
+Text Preprocessing
+        ↓
+Nomic Embed Text
+        ↓
+768-Dimensional Embeddings
+        ↓
+HDBSCAN Clustering
+        ↓
+Llama 3.2
+        ↓
+Cluster Summarization
+        ↓
+Product Opportunity Generation
+        ↓
+PostgreSQL
+        ↓
+Dashboard / Reports
