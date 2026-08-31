@@ -83,7 +83,7 @@ function parseSummary(summary: string): ParsedSummary {
         .split(/(?=\+\s+)/)
         .map((item) =>
           item
-            .replace(/^\s*[\+\-•*]\s*/, "")
+            .replace(/^\s*[+\-•*]\s*/, "")
             .trim()
         )
         .filter(Boolean);
