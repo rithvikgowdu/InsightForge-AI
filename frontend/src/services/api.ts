@@ -21,29 +21,31 @@ async function request<T>(
     requestHeaders.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}${endpoint}`,
-    {
-      ...fetchOptions,
-      headers: requestHeaders,
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...fetchOptions,
+    headers: requestHeaders,
+  });
+
+if (!response.ok) {
+  let message = "Something went wrong";
+
+  try {
+    const errorData = await response.json();
+
+    if (typeof errorData.detail === "string") {
+      message = errorData.detail;
+    } else if (Array.isArray(errorData.detail)) {
+      message = errorData.detail
+        .map((error: { msg?: string }) => error.msg)
+        .filter(Boolean)
+        .join(", ");
     }
-  );
-
-  if (!response.ok) {
-    let message = "Something went wrong";
-
-    try {
-      const errorData = await response.json();
-
-      if (typeof errorData.detail === "string") {
-        message = errorData.detail;
-      }
-    } catch {
-      // Keep the default error message
-    }
-
-    throw new Error(message);
+  } catch {
+    // Keep default error message
   }
+
+  throw new Error(message);
+}
 
   if (response.status === 204) {
     return undefined as T;
@@ -51,7 +53,6 @@ async function request<T>(
 
   return response.json();
 }
-
 
 /* =========================
    Authentication
@@ -96,7 +97,6 @@ export async function register(
   });
 }
 
-
 export async function login(
   data: LoginRequest
 ): Promise<LoginResponse> {
@@ -105,14 +105,10 @@ export async function login(
     body: JSON.stringify(data),
   });
 
-  localStorage.setItem(
-    "access_token",
-    response.access_token
-  );
+  localStorage.setItem("access_token", response.access_token);
 
   return response;
 }
-
 
 export async function getCurrentUser(): Promise<User> {
   return request<User>("/auth/me", {
@@ -121,16 +117,13 @@ export async function getCurrentUser(): Promise<User> {
   });
 }
 
-
 export function logout(): void {
   localStorage.removeItem("access_token");
 }
 
-
 export function getToken(): string | null {
   return localStorage.getItem("access_token");
 }
-
 
 /* =========================
    Analysis
@@ -142,6 +135,12 @@ export type StartAnalysisRequest = {
   limit: number;
 };
 
+export type AnalysisStatus =
+  | "pending"
+  | "running"
+  | "completed"
+  | "failed";
+
 export type AnalysisResult = {
   [key: string]: unknown;
 };
@@ -149,12 +148,11 @@ export type AnalysisResult = {
 export type Analysis = {
   id: number;
   repository: string;
-  status: string;
+  status: AnalysisStatus;
   total_clusters: number;
   results: AnalysisResult[];
   created_at?: string;
 };
-
 
 export async function startAnalysis(
   data: StartAnalysisRequest
@@ -165,7 +163,6 @@ export async function startAnalysis(
     body: JSON.stringify(data),
   });
 }
-
 
 export async function getAnalysisStatus(
   analysisId: number
@@ -179,16 +176,12 @@ export async function getAnalysisStatus(
   );
 }
 
-
-export async function getAnalysisHistory(): Promise<
-  Analysis[]
-> {
+export async function getAnalysisHistory(): Promise<Analysis[]> {
   return request<Analysis[]>("/analysis/history", {
     method: "GET",
     auth: true,
   });
 }
-
 
 /* =========================
    Health

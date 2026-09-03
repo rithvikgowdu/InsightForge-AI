@@ -37,10 +37,10 @@ function AnalysisStatus({
 
     let cancelled = false;
 
-    async function checkStatus() {
+    const checkStatus = async () => {
       try {
         const updatedAnalysis = await getAnalysisStatus(
-          currentAnalysis!.id
+          currentAnalysis.id
         );
 
         if (cancelled) {
@@ -54,9 +54,7 @@ function AnalysisStatus({
         }
 
         if (updatedAnalysis.status === "failed") {
-          setError(
-            "The analysis failed. Please try again."
-          );
+          setError("The analysis failed. Please try again.");
         }
       } catch (err) {
         if (cancelled) {
@@ -69,24 +67,20 @@ function AnalysisStatus({
             : "Unable to check analysis status."
         );
       }
-    }
+    };
+
+    checkStatus();
 
     const interval = window.setInterval(
       checkStatus,
       3000
     );
 
-    checkStatus();
-
     return () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [
-    currentAnalysis?.id,
-    currentAnalysis?.status,
-    onCompleted,
-  ]);
+  }, [currentAnalysis?.id, currentAnalysis?.status]);
 
   if (!currentAnalysis) {
     return null;
@@ -101,9 +95,7 @@ function AnalysisStatus({
       ? "Analysis is currently running..."
       : status === "completed"
       ? "Analysis completed successfully."
-      : status === "failed"
-      ? "Analysis failed."
-      : "Checking analysis status...";
+      : "Analysis failed.";
 
   return (
     <section
@@ -154,7 +146,10 @@ function AnalysisStatus({
       {/* Progress */}
       {status !== "completed" &&
         status !== "failed" && (
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
+          <div
+            className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800"
+            aria-label="Analysis in progress"
+          >
             <div className="h-full w-1/3 animate-pulse rounded-full bg-blue-500" />
           </div>
         )}
@@ -178,7 +173,7 @@ function AnalysisStatus({
             </p>
 
             <p className="mt-2 text-2xl font-bold text-white">
-              {currentAnalysis.results?.length ?? 0}
+              {currentAnalysis.results.length}
             </p>
           </div>
         </div>
@@ -186,7 +181,6 @@ function AnalysisStatus({
 
       {/* Results */}
       {status === "completed" &&
-        currentAnalysis.results &&
         currentAnalysis.results.length > 0 && (
           <div className="mt-6">
             <h3 className="text-base font-semibold text-white">
@@ -201,11 +195,7 @@ function AnalysisStatus({
                     className="rounded-lg border border-slate-800 bg-slate-950 p-4"
                   >
                     <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs leading-5 text-slate-300">
-                      {JSON.stringify(
-                        result,
-                        null,
-                        2
-                      )}
+                      {JSON.stringify(result, null, 2)}
                     </pre>
                   </div>
                 )
@@ -216,8 +206,7 @@ function AnalysisStatus({
 
       {/* No Results */}
       {status === "completed" &&
-        (!currentAnalysis.results ||
-          currentAnalysis.results.length === 0) && (
+        currentAnalysis.results.length === 0 && (
           <div className="mt-6 rounded-lg border border-dashed border-slate-700 bg-slate-950 p-5">
             <p className="text-sm text-slate-400">
               The analysis completed, but no result

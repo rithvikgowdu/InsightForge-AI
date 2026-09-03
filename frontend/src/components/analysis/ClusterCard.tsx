@@ -1,8 +1,8 @@
 type ClusterCardProps = {
   title: string;
   mentions: number;
-  painScore: number;
-  growth: number;
+  painScore?: number;
+  growth?: number;
   summary: string;
 };
 
@@ -29,21 +29,21 @@ function ClusterCard({
           </h3>
         </div>
 
-        <span className="whitespace-nowrap rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-400">
-          Pain {painScore.toFixed(1)}/10
-        </span>
+        {painScore !== undefined && (
+          <span className="whitespace-nowrap rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-400">
+            Pain {painScore.toFixed(1)}/10
+          </span>
+        )}
 
       </div>
-
 
       {/* Summary */}
       <p className="mt-4 text-sm leading-6 text-slate-400">
         {summary}
       </p>
 
-
       {/* Metrics */}
-      <div className="mt-6 grid grid-cols-2 gap-4">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
 
         <div className="rounded-lg bg-slate-800 p-4">
           <p className="text-xs text-slate-400">
@@ -55,26 +55,26 @@ function ClusterCard({
           </p>
         </div>
 
+        {growth !== undefined && (
+          <div className="rounded-lg bg-slate-800 p-4">
+            <p className="text-xs text-slate-400">
+              Growth
+            </p>
 
-        <div className="rounded-lg bg-slate-800 p-4">
-          <p className="text-xs text-slate-400">
-            Growth
-          </p>
-
-          <p className="mt-1 text-xl font-semibold text-green-400">
-            +{growth}%
-          </p>
-        </div>
+            <p className="mt-1 text-xl font-semibold text-green-400">
+              +{growth}%
+            </p>
+          </div>
+        )}
 
       </div>
-
 
       {/* Footer */}
       <div className="mt-5 border-t border-slate-800 pt-4">
 
         <button
           type="button"
-          className="text-sm font-medium text-blue-400 transition hover:text-blue-300"
+          className="text-sm font-medium text-blue-400 transition hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
         >
           View complaints →
         </button>
