@@ -1,3 +1,10 @@
+
+import { useEffect, useState } from "react";
+import {
+  getAnalysisHistory,
+  type Analysis,
+} from "../services/api";
+
 import ReportHeader from "../components/reports/ReportHeader";
 import ExecutiveSummary from "../components/reports/ExecutiveSummary";
 import KeyFindings from "../components/reports/KeyFindings";
@@ -8,56 +15,184 @@ import ReportTrends from "../components/reports/ReportTrends";
 import ReportFeatureRequests from "../components/reports/ReportFeatureRequests";
 import RecommendedMVP from "../components/reports/RecommendedMVP";
 
+import SentimentOverview from "../components/analysis/SentimentOverview";
+import ClassificationBreakdown from "../components/analysis/ClassificationBreakdown";
+
 function Report() {
-  const report = {
-    title: "Food Delivery Market Intelligence",
-    industry: "Food Delivery",
-    generatedAt: "Today",
-    summary:
-      "The analysis identifies late deliveries, high delivery fees, and poor customer support as the most significant customer pain points. Demand for better delivery visibility is increasing, while AI-powered delivery prediction represents a strong product opportunity.",
-  };
+  const [analyses, setAnalyses] = useState<Analysis[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAnalyses() {
+      try {
+        const history = await getAnalysisHistory();
+
+        if (!cancelled) {
+          const completed = history.filter(
+            (item) => item.status === "completed"
+          );
+
+          setAnalyses(completed);
+
+          if (completed.length > 0) {
+            setSelectedId(String(completed[0].id));
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Unable to load report data."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadAnalyses();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const analysis = analyses.find(
+    (item) => String(item.id) === selectedId
+  );
+
+  const clusters = analysis?.results?.clusters ?? [];
+
+  const totalMentions = clusters.reduce(
+    (total, cluster) => total + cluster.documents,
+    0
+  );
+
+  const summary = analysis
+    ? `Analysis of ${analysis.repository} identified ${clusters.length} complaint clusters containing ${totalMentions} associated documents. This summary is based on the saved analysis results.`
+    : "A report will be available after an analysis completes successfully.";
 
   return (
     <main className="w-full min-w-0 space-y-8">
+      <section>
+        <h1 className="text-3xl font-bold text-white">
+          Analysis Reports
+        </h1>
 
-      {/* Header */}
-      <ReportHeader
-        title={report.title}
-        industry={report.industry}
-        generatedAt={report.generatedAt}
-      />
+        <p className="mt-2 text-slate-400">
+          Reports generated from your completed repository analyses.
+        </p>
+      </section>
 
-      {/* Metadata */}
-      <ReportMetadata
-        sources={["Reddit", "GitHub"]}
-        timeRange="Last 30 days"
-        totalMentions={1284}
-        clusters={42}
-      />
+      {loading ? (
+        <p className="text-sm text-slate-400">
+          Loading completed analyses...
+        </p>
+      ) : error ? (
+        <p role="alert" className="text-sm text-red-400">
+          {error}
+        </p>
+      ) : analyses.length === 0 ? (
+        <section className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-8">
+          <h2 className="text-lg font-semibold text-white">
+            No completed reports yet
+          </h2>
 
-      {/* Executive Summary */}
-      <ExecutiveSummary
-        summary={report.summary}
-      />
+          <p className="mt-2 text-sm text-slate-400">
+            Complete an analysis successfully to see its report here.
+          </p>
+        </section>
+      ) : (
+        <>
+          <section className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+            <label
+              htmlFor="report-analysis"
+              className="mb-2 block text-sm font-medium text-slate-300"
+            >
+              Select an analysis
+            </label>
 
-      {/* Key Findings */}
-      <KeyFindings />
+            <select
+              id="report-analysis"
+              value={selectedId}
+              onChange={(event) => setSelectedId(event.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+            >
+              {analyses.map((item) => (
+                <option key={item.id} value={String(item.id)}>
+                  {item.repository} — Analysis #{item.id}
+                </option>
+              ))}
+            </select>
+          </section>
 
-      {/* Problems */}
-      <ReportProblems />
+          {analysis && (
+            <>
+              
+<ReportHeader
+  title={`Repository Intelligence: ${analysis.repository}`}
+  industry={analysis.repository}
+  generatedAt={
+    analysis.created_at
+      ? new Date(analysis.created_at).toLocaleString()
+      : "Date unavailable"
+  }
+  reportContent={[
+    "EXECUTIVE SUMMARY",
+    summary,
+    "",
+    "KEY FINDINGS",
+    ...clusters.map(
+      (cluster) =>
+        `Cluster ${cluster.cluster}: ${cluster.summary} (${cluster.documents} discussions)`
+    ),
+    "",
+    "PRODUCT OPPORTUNITIES",
+    ...clusters
+      .filter((cluster) => cluster.opportunity != null)
+      .map(
+        (cluster) =>
+          `Cluster ${cluster.cluster}: ${JSON.stringify(cluster.opportunity)}`
+      ),
+  ].join("\n")}
+/>
 
-      {/* Trends */}
-      <ReportTrends />
 
-      {/* Feature Requests */}
-      <ReportFeatureRequests />
+              <ReportMetadata
+                sources={["GitHub"]}
+                timeRange="Available analysis data"
+                totalMentions={totalMentions}
+                clusters={clusters.length}
+              />
 
-      {/* Opportunities */}
-      <ReportOpportunities />
+              <ExecutiveSummary summary={summary} />
 
-      {/* Recommended MVP */}
-      <RecommendedMVP />
+              <KeyFindings results={clusters} />
 
+              <ReportProblems results={clusters} />
+
+              <ReportTrends results={clusters} />
+
+              <SentimentOverview />
+
+              <ClassificationBreakdown />
+
+              <ReportFeatureRequests results={clusters} />
+
+              <ReportOpportunities results={clusters} />
+
+              <RecommendedMVP results={clusters} />
+            </>
+          )}
+        </>
+      )}
     </main>
   );
 }

@@ -1,35 +1,17 @@
-type Trend = {
-  title: string;
-  description: string;
-  growth: number;
-  direction: "up" | "down";
+
+import type { AnalysisResult } from "../../services/api";
+
+type ReportTrendsProps = {
+  results?: AnalysisResult[];
 };
 
-const trends: Trend[] = [
-  {
-    title: "Late Delivery",
-    description:
-      "Mentions of delivery delays are increasing significantly across the analyzed discussions.",
-    growth: 42,
-    direction: "up",
-  },
-  {
-    title: "High Delivery Fees",
-    description:
-      "Customers are increasingly discussing delivery costs and their impact on order decisions.",
-    growth: 27,
-    direction: "up",
-  },
-  {
-    title: "Customer Support",
-    description:
-      "Complaints related to support responsiveness continue to increase.",
-    growth: 18,
-    direction: "up",
-  },
-];
+function ReportTrends({ results = [] }: ReportTrendsProps) {
+  const trends = results.filter(
+    (result) =>
+      typeof result.summary === "string" &&
+      result.summary.trim().length > 0
+  );
 
-function ReportTrends() {
   return (
     <section>
       <div className="mb-5">
@@ -38,59 +20,49 @@ function ReportTrends() {
         </h2>
 
         <p className="mt-1 text-sm leading-6 text-slate-400">
-          Customer problems and topics showing meaningful changes in
-          discussion volume.
+          Recurring problem areas identified in the analyzed discussions.
+          These are cluster summaries, not measured changes over time.
         </p>
       </div>
 
-      <div className="space-y-4">
-        {trends.map((trend) => (
-          <div
-            key={trend.title}
-            className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-lg"
-          >
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-white">
-                  {trend.title}
-                </h3>
+      {trends.length === 0 ? (
+        <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <p className="text-sm leading-6 text-slate-400">
+            No trend data is available yet. Complete a repository analysis
+            to see the identified problem areas here.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {trends.map((trend) => (
+            <div
+              key={trend.cluster}
+              className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-lg"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    Problem Cluster {trend.cluster}
+                  </h3>
 
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                  {trend.description}
-                </p>
-              </div>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+                    {trend.summary}
+                  </p>
+                </div>
 
-              <div className="flex shrink-0 items-center gap-2">
-                <span
-                  aria-hidden="true"
-                  className="text-xl text-green-400"
-                >
-                  {trend.direction === "up" ? "↑" : "↓"}
-                </span>
-
-                <span className="text-lg font-semibold text-green-400">
-                  {trend.growth}%
-                </span>
+                <div className="shrink-0 rounded-lg bg-slate-800 px-3 py-2">
+                  <p className="text-lg font-semibold text-white">
+                    {trend.documents}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Discussions
+                  </p>
+                </div>
               </div>
             </div>
-
-            <div className="mt-5">
-              <div className="h-2 overflow-hidden rounded-full bg-slate-800">
-                <div
-                  className="h-full rounded-full bg-blue-500"
-                  style={{
-                    width: `${Math.min(trend.growth * 2, 100)}%`,
-                  }}
-                />
-              </div>
-
-              <p className="mt-2 text-xs text-slate-500">
-                Change in discussion volume
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

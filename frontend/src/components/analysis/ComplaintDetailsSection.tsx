@@ -1,50 +1,54 @@
-import ComplaintDetails from "./ComplaintDetails";
 
-const complaintDetails = {
-  title: "Late Delivery",
-  painScore: 8.7,
-  mentions: 1284,
-  growth: 42,
-  summary:
-    "Users frequently report delayed deliveries and inaccurate delivery estimates. Complaints often mention uncertainty around arrival times and a lack of timely updates when orders are delayed.",
-  themes: [
-    "Inaccurate ETA",
-    "Delayed Orders",
-    "No Delay Notification",
-    "Poor Customer Support",
-  ],
-  complaints: [
-    "I was told my order would arrive in 30 minutes, but it took more than an hour.",
-    "The delivery estimate keeps changing and I have no idea when my order will actually arrive.",
-    "There was no notification when my delivery was delayed.",
-  ],
+import ComplaintDetails from "./ComplaintDetails";
+import type { AnalysisResult } from "../../services/api";
+
+type ComplaintDetailsSectionProps = {
+  results?: AnalysisResult[];
 };
 
-function ComplaintDetailsSection() {
+function ComplaintDetailsSection({
+  results = [],
+}: ComplaintDetailsSectionProps) {
+  const complaints = results.filter(
+    (result) =>
+      typeof result.summary === "string" &&
+      result.summary.trim().length > 0
+  );
+
   return (
     <section>
-
       <div className="mb-5">
         <h2 className="text-2xl font-semibold text-white">
           Complaint Details
         </h2>
 
         <p className="mt-1 text-sm leading-6 text-slate-400">
-          Understand the underlying themes and representative complaints
-          behind the identified problem.
+          Explore the problem summaries identified by the repository analysis.
         </p>
       </div>
 
-      <ComplaintDetails
-        title={complaintDetails.title}
-        painScore={complaintDetails.painScore}
-        mentions={complaintDetails.mentions}
-        growth={complaintDetails.growth}
-        summary={complaintDetails.summary}
-        themes={complaintDetails.themes}
-        complaints={complaintDetails.complaints}
-      />
-
+      {complaints.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-8 text-center">
+          <p className="text-sm text-slate-400">
+            No complaint details are available yet.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {complaints.map((result) => (
+            <ComplaintDetails
+              key={result.cluster}
+              title={`Complaint Cluster ${result.cluster}`}
+              painScore={0}
+              mentions={result.documents}
+              growth={0}
+              summary={result.summary}
+              themes={[]}
+              complaints={[]}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

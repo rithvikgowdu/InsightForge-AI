@@ -1,32 +1,69 @@
-type MVPFeature = {
-  title: string;
-  description: string;
+
+import type { AnalysisResult } from "../../services/api";
+
+type RecommendedMVPProps = {
+  results?: AnalysisResult[];
 };
 
-const mvpFeatures: MVPFeature[] = [
-  {
-    title: "Delivery Delay Prediction",
-    description:
-      "Predict whether an order is likely to arrive later than the estimated delivery time.",
-  },
-  {
-    title: "Real-Time ETA",
-    description:
-      "Continuously update the expected arrival time using available delivery signals.",
-  },
-  {
-    title: "Customer Notifications",
-    description:
-      "Notify customers when an order is likely to be delayed.",
-  },
-  {
-    title: "Delivery Performance Dashboard",
-    description:
-      "Give operations teams visibility into predicted and actual delivery performance.",
-  },
-];
+function RecommendedMVP({ results = [] }: RecommendedMVPProps) {
+  const recommendations = results.flatMap((result) => {
+    const value = result.opportunity;
 
-function RecommendedMVP() {
+    if (!value || typeof value !== "object") {
+      return [];
+    }
+
+    const data = value as Record<string, unknown>;
+
+    const title =
+      data.title ??
+      data.name ??
+      data.opportunity ??
+      data.opportunityTitle ??
+      data.opportunity_title;
+
+    const description =
+      data.description ??
+      data.summary ??
+      data.rationale;
+
+    const rawFeatures =
+      data.mvpFeatures ??
+      data.mvp_features ??
+      data.features ??
+      data.featureRequests ??
+      data.feature_requests ??
+      data.mvp;
+
+    const features = Array.isArray(rawFeatures)
+      ? rawFeatures.filter(
+          (feature): feature is string => typeof feature === "string"
+        )
+      : typeof rawFeatures === "string"
+        ? [rawFeatures]
+        : [];
+
+    if (typeof title !== "string" && features.length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        key: String(result.cluster),
+        cluster: result.cluster,
+        title:
+          typeof title === "string"
+            ? title
+            : `MVP recommendation for Cluster ${result.cluster}`,
+        description:
+          typeof description === "string"
+            ? description
+            : result.summary,
+        features,
+      },
+    ];
+  });
+
   return (
     <section>
       <div className="mb-5">
@@ -35,53 +72,62 @@ function RecommendedMVP() {
         </h2>
 
         <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-400">
-          A focused starting point for validating the highest-scoring
-          opportunity identified by the analysis.
+          Initial product recommendations and features returned by the
+          repository analysis.
         </p>
       </div>
 
-      <div className="rounded-xl border border-blue-500/20 bg-slate-900 p-6 shadow-lg">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-blue-400">
-              Recommended Product
-            </p>
-
-            <h3 className="mt-1 text-xl font-semibold text-white">
-              AI Delivery Optimization Platform
-            </h3>
-          </div>
-
-          <span className="w-fit rounded-full bg-green-500/10 px-3 py-1 text-sm font-medium text-green-400">
-            High Potential
-          </span>
+      {recommendations.length === 0 ? (
+        <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <p className="text-sm leading-6 text-slate-400">
+            No MVP recommendations are available yet. This section will
+            populate when the analysis returns an opportunity with
+            recommended features.
+          </p>
         </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-          {mvpFeatures.map((feature, index) => (
+      ) : (
+        <div className="space-y-6">
+          {recommendations.map((recommendation) => (
             <div
-              key={feature.title}
-              className="rounded-lg border border-slate-800 bg-slate-950 p-5"
+              key={recommendation.key}
+              className="rounded-xl border border-blue-500/20 bg-slate-900 p-6 shadow-lg"
             >
-              <div className="flex items-start gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-sm font-semibold text-blue-400">
-                  {index + 1}
-                </span>
+              <p className="text-sm font-medium text-blue-400">
+                Based on Cluster {recommendation.cluster}
+              </p>
 
-                <div>
-                  <h4 className="font-medium text-white">
-                    {feature.title}
-                  </h4>
+              <h3 className="mt-1 text-xl font-semibold text-white">
+                {recommendation.title}
+              </h3>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-400">
-                    {feature.description}
-                  </p>
+              <p className="mt-3 text-sm leading-6 text-slate-400">
+                {recommendation.description}
+              </p>
+
+              {recommendation.features.length > 0 && (
+                <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {recommendation.features.map((feature, index) => (
+                    <div
+                      key={`${recommendation.key}-${index}`}
+                      className="rounded-lg border border-slate-800 bg-slate-950 p-5"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-sm font-semibold text-blue-400">
+                          {index + 1}
+                        </span>
+
+                        <p className="text-sm leading-6 text-slate-300">
+                          {feature}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
           ))}
         </div>
-      </div>
+      )}
     </section>
   );
 }

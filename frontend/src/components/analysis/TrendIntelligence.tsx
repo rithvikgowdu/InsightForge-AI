@@ -1,148 +1,80 @@
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 
-const trendData = [
-  {
-    month: "May",
-    mentions: 620,
-  },
-  {
-    month: "Jun",
-    mentions: 780,
-  },
-  {
-    month: "Jul",
-    mentions: 940,
-  },
-  {
-    month: "Aug",
-    mentions: 1284,
-  },
-];
+import type { AnalysisResult } from "../../services/api";
 
-const trends = [
-  {
-    title: "Late Delivery",
-    growth: 42,
-    direction: "up",
-  },
-  {
-    title: "High Delivery Fees",
-    growth: 27,
-    direction: "up",
-  },
-  {
-    title: "Poor Customer Support",
-    growth: 18,
-    direction: "up",
-  },
-  {
-    title: "Order Cancellation",
-    growth: 11,
-    direction: "up",
-  },
-];
+type TrendIntelligenceProps = {
+  results?: AnalysisResult[];
+};
 
-function TrendIntelligence() {
+function TrendIntelligence({
+  results = [],
+}: TrendIntelligenceProps) {
+  const trends = results
+    .filter(
+      (result) =>
+        typeof result.summary === "string" &&
+        result.summary.trim().length > 0
+    )
+    .map((result) => ({
+      id: result.cluster,
+      title: `Complaint Cluster ${result.cluster}`,
+      summary: result.summary,
+      mentions: result.documents,
+    }));
+
   return (
     <section>
-      {/* Header */}
       <div className="mb-5">
         <h2 className="text-2xl font-semibold text-white">
           Emerging Trends
         </h2>
 
         <p className="mt-1 text-sm leading-6 text-slate-400">
-          Identify customer problems that are increasing or decreasing
-          in frequency over time.
+          Recurring problem areas identified in the repository analysis.
+          Historical growth trends require time-series data.
         </p>
       </div>
 
-      {/* Trend Indicators */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {trends.map((trend) => (
-          <div
-            key={trend.title}
-            className="rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-lg"
-          >
-            <p className="text-sm text-slate-400">
-              {trend.title}
-            </p>
-
-            <div className="mt-3 flex items-center gap-2">
-              <span className="text-2xl font-bold text-green-400">
-                ↑
-              </span>
-
-              <span className="text-2xl font-bold text-white">
-                {trend.growth}%
-              </span>
-            </div>
-
-            <p className="mt-2 text-xs text-slate-500">
-              Growth in mentions
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Chart */}
-      <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-lg">
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-white">
-            Complaint Mentions Over Time
-          </h3>
-
-          <p className="mt-1 text-sm text-slate-400">
-            Total mentions of identified customer problems.
+      {trends.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-8 text-center">
+          <p className="text-sm text-slate-400">
+            No trend data is available yet. Complete an analysis to
+            display identified problem areas.
           </p>
         </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {trends.map((trend) => (
+              <div
+                key={trend.id}
+                className="rounded-xl border border-slate-800 bg-slate-900 p-5"
+              >
+                <p className="text-sm text-slate-400">
+                  {trend.title}
+                </p>
 
-        <div className="h-80 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trendData}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#1E293B"
-              />
+                <p className="mt-3 text-2xl font-bold text-white">
+                  {trend.mentions.toLocaleString()}
+                </p>
 
-              <XAxis
-                dataKey="month"
-                stroke="#94A3B8"
-              />
+                <p className="mt-1 text-xs text-slate-500">
+                  Documents in this cluster
+                </p>
 
-              <YAxis
-                stroke="#94A3B8"
-              />
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  {trend.summary}
+                </p>
+              </div>
+            ))}
+          </div>
 
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0F172A",
-                  border: "1px solid #1E293B",
-                  borderRadius: "8px",
-                  color: "#FFFFFF",
-                }}
-              />
-
-              <Line
-                type="monotone"
-                dataKey="mentions"
-                stroke="#2563EB"
-                strokeWidth={3}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+          <p className="mt-4 text-xs leading-5 text-slate-500">
+            These are recurring problem areas, not measured growth
+            trends. Percentage growth and historical charts will require
+            dated observations across multiple time periods.
+          </p>
+        </>
+      )}
     </section>
   );
 }

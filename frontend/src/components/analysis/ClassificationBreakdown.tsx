@@ -1,91 +1,77 @@
-type Classification = {
+
+export type ClassificationItem = {
   label: string;
-  percentage: number;
   count: number;
 };
 
-const classifications: Classification[] = [
-  {
-    label: "Complaints",
-    percentage: 52,
-    count: 668,
-  },
-  {
-    label: "Feature Requests",
-    percentage: 28,
-    count: 360,
-  },
-  {
-    label: "Improvements",
-    percentage: 12,
-    count: 154,
-  },
-  {
-    label: "Other",
-    percentage: 8,
-    count: 102,
-  },
-];
+type ClassificationBreakdownProps = {
+  classifications?: ClassificationItem[];
+};
 
-function ClassificationBreakdown() {
+function ClassificationBreakdown({
+  classifications = [],
+}: ClassificationBreakdownProps) {
+  const total = classifications.reduce(
+    (sum, item) => sum + item.count,
+    0
+  );
+
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-lg">
-
-      {/* Header */}
+    <section className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-lg">
       <div>
         <h2 className="text-xl font-semibold text-white">
           Feedback Classification
         </h2>
 
         <p className="mt-1 text-sm leading-6 text-slate-400">
-          How the analyzed discussions are categorized by the AI.
+          Classification counts returned by the analysis.
         </p>
       </div>
 
+      {classifications.length === 0 || total === 0 ? (
+        <div className="mt-6 rounded-lg border border-dashed border-slate-700 bg-slate-950 p-6 text-center">
+          <p className="text-sm text-slate-400">
+            No classification data is available yet.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-6 space-y-4">
+          {classifications.map((item) => {
+            const percentage = (item.count / total) * 100;
 
-      {/* Classification list */}
-      <div className="mt-6 space-y-4">
-
-        {classifications.map((item) => (
-          <div
-            key={item.label}
-            className="rounded-lg bg-slate-800 p-4"
-          >
-
-            <div className="flex items-center justify-between">
-
-              <div>
-                <p className="font-medium text-white">
-                  {item.label}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-400">
-                  {item.count.toLocaleString()} mentions
-                </p>
-              </div>
-
-              <p className="text-lg font-semibold text-white">
-                {item.percentage}%
-              </p>
-
-            </div>
-
-
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-700">
-
+            return (
               <div
-                className="h-full rounded-full bg-blue-500"
-                style={{ width: `${item.percentage}%` }}
-              />
+                key={item.label}
+                className="rounded-lg bg-slate-800 p-4"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-medium text-white">
+                      {item.label}
+                    </p>
 
-            </div>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {item.count.toLocaleString()} mentions
+                    </p>
+                  </div>
 
-          </div>
-        ))}
+                  <p className="text-lg font-semibold text-white">
+                    {percentage.toFixed(1)}%
+                  </p>
+                </div>
 
-      </div>
-
-    </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-700">
+                  <div
+                    className="h-full rounded-full bg-blue-500"
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
 

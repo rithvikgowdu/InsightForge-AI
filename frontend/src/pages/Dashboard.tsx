@@ -1,4 +1,10 @@
+
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import {
+  getAnalysisHistory,
+  type Analysis,
+} from "../services/api";
 
 import SearchBar from "../components/dashboard/SearchBar";
 import StatsCard from "../components/dashboard/StatsCard";
@@ -13,17 +19,77 @@ import RecentSearches from "../components/dashboard/RecentSearches";
 function Dashboard() {
   const { user } = useAuth();
 
-  const trendData = [
-    { month: "May", mentions: 620 },
-    { month: "Jun", mentions: 780 },
-    { month: "Jul", mentions: 940 },
-    { month: "Aug", mentions: 1284 },
-  ];
+  const [analyses, setAnalyses] = useState<Analysis[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHistory() {
+      try {
+        const history = await getAnalysisHistory();
+
+        if (!cancelled) {
+          setAnalyses(history);
+          setError("");
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Unable to load analysis history."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const completedAnalyses = analyses.filter(
+    (analysis) => analysis.status === "completed"
+  );
+
+  const opportunities = completedAnalyses.flatMap(
+    (analysis) => analysis.results?.clusters ?? []
+  ).filter((cluster) => cluster.opportunity != null);
+
+  const trendingTopics = completedAnalyses.flatMap(
+    (analysis) => analysis.results?.clusters ?? []
+  );
+
+  const latestAnalysis = completedAnalyses[0];
+  const latestClusters = latestAnalysis?.results?.clusters ?? [];
+  const latestCluster = latestClusters[0];
+
+  const trendData = completedAnalyses
+    .slice(0, 4)
+    .reverse()
+    .map((analysis) => ({
+      month: analysis.created_at
+        ? new Date(analysis.created_at).toLocaleDateString(
+            undefined,
+            { month: "short", day: "2-digit" }
+          )
+        : `Analysis ${analysis.id}`,
+      mentions: (analysis.results?.clusters ?? []).reduce(
+        (total, cluster) => total + cluster.documents,
+        0
+      ),
+    }));
 
   return (
     <main className="w-full min-w-0 space-y-8">
-
-      {/* Welcome */}
       <section>
         <p className="text-sm font-medium text-blue-400">
           Product Intelligence
@@ -39,46 +105,40 @@ function Dashboard() {
         </p>
       </section>
 
-
-      {/* Search */}
       <section aria-label="Dashboard search">
         <SearchBar />
       </section>
 
-
-      {/* Overview */}
       <section aria-labelledby="overview-title">
-        <h2
-          id="overview-title"
-          className="sr-only"
-        >
+        <h2 id="overview-title" className="sr-only">
           Dashboard Overview
         </h2>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-
           <StatsCard
             title="Total Analyses"
-            value="325"
+            value={loading ? "..." : String(analyses.length)}
           />
 
           <StatsCard
             title="Opportunities"
-            value="84"
+            value={loading ? "..." : String(opportunities.length)}
           />
 
           <StatsCard
             title="Trending Topics"
-            value="41"
+            value={loading ? "..." : String(trendingTopics.length)}
           />
-
         </div>
+
+        {error && (
+          <p role="alert" className="mt-4 text-sm text-red-400">
+            Could not load dashboard statistics: {error}
+          </p>
+        )}
       </section>
 
-
-      {/* Customer Problems */}
       <section aria-labelledby="customer-problems-title">
-
         <div className="mb-4">
           <h2
             id="customer-problems-title"
@@ -88,31 +148,31 @@ function Dashboard() {
           </h2>
 
           <p className="mt-1 text-sm text-slate-400">
-            Recurring problems discovered from user discussions.
+            Problems discovered in your latest completed analysis.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {latestCluster ? (
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <ComplaintCard
+              title={`Complaint Cluster ${latestCluster.cluster}`}
+              mentions={latestCluster.documents}
+              painScore={0}
+              summary={latestCluster.summary}
+            />
 
-          <ComplaintCard
-            title="Late Delivery"
-            mentions={1284}
-            painScore={8.7}
-            summary="Users frequently complain about delayed deliveries."
-          />
-
-          <PainScoreCard
-            score={8.7}
-          />
-
-        </div>
-
+            <PainScoreCard score={0} />
+          </div>
+        ) : (
+          <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-6 text-sm text-slate-400">
+            {loading
+              ? "Loading analysis results..."
+              : "No completed analysis is available yet."}
+          </p>
+        )}
       </section>
 
-
-      {/* Emerging Trends */}
       <section aria-labelledby="emerging-trends-title">
-
         <div className="mb-4">
           <h2
             id="emerging-trends-title"
@@ -122,18 +182,21 @@ function Dashboard() {
           </h2>
 
           <p className="mt-1 text-sm text-slate-400">
-            Track how frequently customer problems are mentioned over time.
+            Document counts from your recent completed analyses.
+            These are not historical growth measurements.
           </p>
         </div>
 
-        <TrendCard data={trendData} />
-
+        {trendData.length > 0 ? (
+          <TrendCard data={trendData} />
+        ) : (
+          <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-6 text-sm text-slate-400">
+            No trend data is available yet.
+          </p>
+        )}
       </section>
 
-
-      {/* Opportunity Intelligence */}
       <section aria-labelledby="opportunity-intelligence-title">
-
         <div className="mb-4">
           <h2
             id="opportunity-intelligence-title"
@@ -143,26 +206,23 @@ function Dashboard() {
           </h2>
 
           <p className="mt-1 text-sm text-slate-400">
-            AI-generated assessment of the business potential behind a problem.
+            Opportunities returned by completed analyses.
           </p>
         </div>
 
-        <OpportunityScoreCard
-          score={8.6}
-          pain={8.7}
-          frequency={8.4}
-          growth={8.9}
-          marketPotential={8.2}
-          aiFit={9.1}
-          confidence={8.5}
-        />
-
+        {opportunities.length > 0 ? (
+          <p className="rounded-xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
+            {opportunities.length} opportunity-bearing clusters found
+            across your completed analyses.
+          </p>
+        ) : (
+          <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-6 text-sm text-slate-400">
+            No opportunity data is available yet.
+          </p>
+        )}
       </section>
 
-
-      {/* Feature Requests */}
       <section aria-labelledby="feature-requests-title">
-
         <div className="mb-4">
           <h2
             id="feature-requests-title"
@@ -172,22 +232,17 @@ function Dashboard() {
           </h2>
 
           <p className="mt-1 text-sm text-slate-400">
-            Features users repeatedly request across discussions.
+            Feature suggestions returned by the analysis.
           </p>
         </div>
 
-        <FeatureRequestCard
-          title="Real-Time Delivery Tracking"
-          mentions={734}
-          description="Users want more accurate real-time information about their delivery status."
-        />
-
+        <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-6 text-sm text-slate-400">
+          Feature request summaries will appear here when structured
+          feature data is available.
+        </p>
       </section>
 
-
-      {/* Product Opportunities */}
       <section aria-labelledby="product-opportunities-title">
-
         <div className="mb-4">
           <h2
             id="product-opportunities-title"
@@ -197,20 +252,12 @@ function Dashboard() {
           </h2>
 
           <p className="mt-1 text-sm text-slate-400">
-            AI-generated opportunities based on recurring user problems.
+            Recent analysis activity and saved searches.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-
-          <OpportunityCard />
-
-          <RecentSearches />
-
-        </div>
-
+        <RecentSearches />
       </section>
-
     </main>
   );
 }

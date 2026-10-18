@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { startAnalysis, type Analysis } from "../../services/api";
+import {
+  startAnalysis,
+  type Analysis,
+} from "../../services/api";
 import Button from "../ui/Button";
 
 type RepositoryAnalysisFormProps = {
@@ -25,28 +28,52 @@ function RepositoryAnalysisForm({
     setError("");
     setSuccess("");
 
-    if (!owner.trim() || !repository.trim()) {
+    const trimmedOwner = owner.trim();
+    const trimmedRepository = repository.trim();
+    const parsedLimit = Number(limit);
+
+    if (!trimmedOwner || !trimmedRepository) {
       setError(
         "Please enter both the repository owner and repository name."
       );
       return;
     }
 
-    const parsedLimit = Number(limit);
-
-    if (!Number.isInteger(parsedLimit) || parsedLimit <= 0) {
-      setError("Please enter a valid positive issue limit.");
+    if (
+      !Number.isInteger(parsedLimit) ||
+      parsedLimit <= 0
+    ) {
+      setError(
+        "Please enter a valid positive issue limit."
+      );
       return;
     }
 
     setLoading(true);
 
     try {
-      const analysis = await startAnalysis({
-        owner: owner.trim(),
-        repository: repository.trim(),
+      const response = await startAnalysis({
+        owner: trimmedOwner,
+        repository: trimmedRepository,
         limit: parsedLimit,
       });
+
+      /*
+       * The POST /analysis endpoint returns the newly
+       * created analysis in its initial state.
+       *
+       * We normalize it into the frontend Analysis type
+       * so AnalysisStatus can start polling the analysis.
+       */
+    const analysis: Analysis = {
+  id: response.id,
+  repository: response.repository,
+  status: response.status,
+  total_clusters: response.total_clusters,
+  results: {
+    clusters: [],
+  },
+};
 
       setSuccess(
         `Analysis started for ${analysis.repository}. Analysis ID: ${analysis.id}`
@@ -78,8 +105,8 @@ function RepositoryAnalysisForm({
         </h2>
 
         <p className="mt-1 text-sm leading-6 text-slate-400">
-          Start an AI analysis of issues and discussions from a
-          GitHub repository.
+          Start an AI analysis of issues and discussions
+          from a GitHub repository.
         </p>
       </div>
 
@@ -87,7 +114,7 @@ function RepositoryAnalysisForm({
         onSubmit={handleSubmit}
         className="grid grid-cols-1 gap-5 md:grid-cols-3"
       >
-        {/* Owner */}
+        {/* Repository Owner */}
         <div>
           <label
             htmlFor="repository-owner"
@@ -108,11 +135,12 @@ function RepositoryAnalysisForm({
             }}
             placeholder="e.g. microsoft"
             required
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+            disabled={loading}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
 
-        {/* Repository */}
+        {/* Repository Name */}
         <div>
           <label
             htmlFor="repository-name"
@@ -133,11 +161,12 @@ function RepositoryAnalysisForm({
             }}
             placeholder="e.g. vscode"
             required
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+            disabled={loading}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
 
-        {/* Limit */}
+        {/* Issue Limit */}
         <div>
           <label
             htmlFor="repository-limit"
@@ -157,7 +186,8 @@ function RepositoryAnalysisForm({
               setError("");
               setSuccess("");
             }}
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+            disabled={loading}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
 
@@ -190,7 +220,9 @@ function RepositoryAnalysisForm({
             type="submit"
             disabled={loading}
           >
-            {loading ? "Starting Analysis..." : "Start Analysis"}
+            {loading
+              ? "Starting Analysis..."
+              : "Start Analysis"}
           </Button>
         </div>
       </form>

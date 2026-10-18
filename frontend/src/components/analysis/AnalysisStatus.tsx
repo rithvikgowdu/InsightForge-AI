@@ -1,12 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  getAnalysis,
   getAnalysisStatus,
   type Analysis,
+  type StartAnalysisResponse,
 } from "../../services/api";
 
 type AnalysisStatusProps = {
-  analysis: Analysis | null;
+  analysis: Analysis | StartAnalysisResponse | null;
   onCompleted?: (analysis: Analysis) => void;
+};
+
+type StatusData = {
+  id: number;
+  repository: string;
+  status: string;
+  total_clusters: number;
 };
 
 function AnalysisStatus({
@@ -14,47 +23,102 @@ function AnalysisStatus({
   onCompleted,
 }: AnalysisStatusProps) {
   const [currentAnalysis, setCurrentAnalysis] =
-    useState<Analysis | null>(analysis);
+    useState<Analysis | null>(null);
+
+  const [statusData, setStatusData] =
+    useState<StatusData | null>(null);
 
   const [error, setError] = useState("");
+   const onCompletedRef = useRef(onCompleted);
 
+useEffect(() => {
+  onCompletedRef.current = onCompleted;
+}, [onCompleted]);
+  /*
+   * Set the initial analysis information.
+   */
   useEffect(() => {
-    setCurrentAnalysis(analysis);
+    if (!analysis) {
+      setCurrentAnalysis(null);
+      setStatusData(null);
+      setError("");
+      return;
+    }
+
     setError("");
+
+    setStatusData({
+      id: analysis.id,
+      repository: analysis.repository,
+      status: analysis.status,
+      total_clusters: analysis.total_clusters,
+    });
+
+    /*
+     * The POST /analysis response may not contain
+     * the complete results structure.
+     *
+     * We therefore wait for GET /analysis/{id}
+     * when the analysis is completed.
+     */
+    setCurrentAnalysis(null);
   }, [analysis]);
 
+  /*
+   * Poll the backend while the analysis is running.
+   */
   useEffect(() => {
-    if (!currentAnalysis) {
+    if (!statusData) {
       return;
     }
 
     if (
-      currentAnalysis.status === "completed" ||
-      currentAnalysis.status === "failed"
+      statusData.status === "completed" ||
+      statusData.status === "failed"
     ) {
       return;
     }
 
     let cancelled = false;
 
-    const checkStatus = async () => {
+    async function checkStatus() {
       try {
-        const updatedAnalysis = await getAnalysisStatus(
-          currentAnalysis.id
-        );
+        const updatedStatus =
+          await getAnalysisStatus(statusData!.id);
 
         if (cancelled) {
           return;
         }
 
-        setCurrentAnalysis(updatedAnalysis);
+        setStatusData({
+          id: updatedStatus.id,
+          repository: updatedStatus.repository,
+          status: updatedStatus.status,
+          total_clusters:
+            updatedStatus.total_clusters,
+        });
 
-        if (updatedAnalysis.status === "completed") {
-          onCompleted?.(updatedAnalysis);
+        /*
+         * Once completed, fetch the complete analysis
+         * including the cluster results.
+         */
+        if (updatedStatus.status === "completed") {
+          const completedAnalysis =
+            await getAnalysis(updatedStatus.id);
+
+          if (cancelled) {
+            return;
+          }
+
+          setCurrentAnalysis(completedAnalysis);
+
+          onCompletedRef.current?.(completedAnalysis);
         }
 
-        if (updatedAnalysis.status === "failed") {
-          setError("The analysis failed. Please try again.");
+        if (updatedStatus.status === "failed") {
+          setError(
+            "The analysis failed. Please try again."
+          );
         }
       } catch (err) {
         if (cancelled) {
@@ -67,10 +131,16 @@ function AnalysisStatus({
             : "Unable to check analysis status."
         );
       }
-    };
+    }
 
+    /*
+     * Check immediately.
+     */
     checkStatus();
 
+    /*
+     * Then check every 3 seconds.
+     */
     const interval = window.setInterval(
       checkStatus,
       3000
@@ -80,13 +150,15 @@ function AnalysisStatus({
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [currentAnalysis?.id, currentAnalysis?.status]);
-
-  if (!currentAnalysis) {
+  }, [
+  statusData?.id,
+  statusData?.status,
+]);
+  if (!statusData) {
     return null;
   }
 
-  const status = currentAnalysis.status;
+  const status = statusData.status;
 
   const statusMessage =
     status === "pending"
@@ -95,7 +167,12 @@ function AnalysisStatus({
       ? "Analysis is currently running..."
       : status === "completed"
       ? "Analysis completed successfully."
-      : "Analysis failed.";
+      : status === "failed"
+      ? "Analysis failed."
+      : "Checking analysis status...";
+
+  const clusters =
+    currentAnalysis?.results?.clusters ?? [];
 
   return (
     <section
@@ -114,11 +191,11 @@ function AnalysisStatus({
             id="analysis-status-title"
             className="mt-1 text-lg font-semibold text-white"
           >
-            {currentAnalysis.repository}
+            {statusData.repository}
           </h2>
 
           <p className="mt-1 text-sm text-slate-400">
-            Analysis ID: {currentAnalysis.id}
+            Analysis ID: {statusData.id}
           </p>
         </div>
 
@@ -138,7 +215,7 @@ function AnalysisStatus({
         </span>
       </div>
 
-      {/* Status */}
+      {/* Status Message */}
       <p className="mt-5 text-sm text-slate-400">
         {statusMessage}
       </p>
@@ -146,10 +223,7 @@ function AnalysisStatus({
       {/* Progress */}
       {status !== "completed" &&
         status !== "failed" && (
-          <div
-            className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800"
-            aria-label="Analysis in progress"
-          >
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
             <div className="h-full w-1/3 animate-pulse rounded-full bg-blue-500" />
           </div>
         )}
@@ -163,7 +237,7 @@ function AnalysisStatus({
             </p>
 
             <p className="mt-2 text-2xl font-bold text-white">
-              {currentAnalysis.total_clusters}
+              {statusData.total_clusters}
             </p>
           </div>
 
@@ -173,44 +247,52 @@ function AnalysisStatus({
             </p>
 
             <p className="mt-2 text-2xl font-bold text-white">
-              {currentAnalysis.results.length}
+              {clusters.length}
             </p>
           </div>
         </div>
       )}
 
-      {/* Results */}
+      {/* Analysis Results */}
       {status === "completed" &&
-        currentAnalysis.results.length > 0 && (
+        clusters.length > 0 && (
           <div className="mt-6">
             <h3 className="text-base font-semibold text-white">
               Analysis Results
             </h3>
 
             <div className="mt-4 space-y-3">
-              {currentAnalysis.results.map(
-                (result, index) => (
-                  <div
-                    key={index}
-                    className="rounded-lg border border-slate-800 bg-slate-950 p-4"
-                  >
-                    <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs leading-5 text-slate-300">
-                      {JSON.stringify(result, null, 2)}
-                    </pre>
+              {clusters.map((result) => (
+                <div
+                  key={result.cluster}
+                  className="rounded-lg border border-slate-800 bg-slate-950 p-4"
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <h4 className="font-semibold text-white">
+                      Cluster {result.cluster}
+                    </h4>
+
+                    <span className="text-xs text-slate-500">
+                      {result.documents} documents
+                    </span>
                   </div>
-                )
-              )}
+
+                  <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-400">
+                    {result.summary}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
       {/* No Results */}
       {status === "completed" &&
-        currentAnalysis.results.length === 0 && (
+        clusters.length === 0 && (
           <div className="mt-6 rounded-lg border border-dashed border-slate-700 bg-slate-950 p-5">
             <p className="text-sm text-slate-400">
-              The analysis completed, but no result
-              records were returned.
+              The analysis completed, but no cluster
+              results were returned.
             </p>
           </div>
         )}

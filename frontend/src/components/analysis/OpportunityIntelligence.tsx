@@ -1,58 +1,148 @@
-import OpportunityDetails from "./OpportunityDetails";
 
-const opportunity = {
-  title: "AI Delivery Optimization Platform",
-  score: 8.6,
-  problem:
-    "Food delivery users frequently experience delayed orders and inaccurate delivery estimates. Repeated complaints indicate that customers lack visibility into when their orders will actually arrive.",
-  whyNow:
-    "Complaints about delivery delays are increasing, with mentions growing by 42% over the analyzed period. This indicates that the problem is becoming more important rather than remaining a static customer issue.",
-  aiSolution:
-    "An AI-powered delivery prediction system could combine historical order data, delivery patterns, location information, and traffic signals to predict delays and provide more accurate estimated arrival times.",
-  targetUsers:
-    "Food delivery companies, restaurant platforms, and logistics teams.",
-  businessPotential: "High" as const,
-  confidence: 8.5,
-  mvpFeatures: [
-    "Delivery delay prediction",
-    "Real-time ETA estimation",
-    "Customer delay notifications",
-    "Delivery performance dashboard",
-  ],
+import OpportunityDetails from "./OpportunityDetails";
+import type { AnalysisResult } from "../../services/api";
+
+type OpportunityIntelligenceProps = {
+  results?: AnalysisResult[];
 };
 
-function OpportunityIntelligence() {
+function OpportunityIntelligence({
+  results = [],
+}: OpportunityIntelligenceProps) {
+  const opportunities = results
+    .filter((result) => result.opportunity != null)
+    .map((result) => {
+      const opportunity = result.opportunity as Record<
+        string,
+        unknown
+      >;
+
+      const readText = (
+        ...keys: string[]
+      ): string | undefined => {
+        for (const key of keys) {
+          const value = opportunity[key];
+
+          if (typeof value === "string" && value.trim()) {
+            return value;
+          }
+        }
+
+        return undefined;
+      };
+
+      const readNumber = (
+        ...keys: string[]
+      ): number | undefined => {
+        for (const key of keys) {
+          const value = opportunity[key];
+
+          if (typeof value === "number" && Number.isFinite(value)) {
+            return value;
+          }
+
+          if (
+            typeof value === "string" &&
+            value.trim() !== "" &&
+            Number.isFinite(Number(value))
+          ) {
+            return Number(value);
+          }
+        }
+
+        return undefined;
+      };
+
+      const readFeatures = (): string[] => {
+        const value =
+          opportunity.mvpFeatures ??
+          opportunity.mvp_features ??
+          opportunity.mvp_features_suggestions;
+
+        return Array.isArray(value)
+          ? value.filter(
+              (feature): feature is string =>
+                typeof feature === "string"
+            )
+          : [];
+      };
+
+      const potential = readText(
+        "businessPotential",
+        "business_potential"
+      );
+
+      const businessPotential: "High" | "Medium" | "Low" =
+        potential?.toLowerCase() === "high"
+          ? "High"
+          : potential?.toLowerCase() === "low"
+          ? "Low"
+          : "Medium";
+
+      return {
+        cluster: result.cluster,
+        title:
+          readText("title", "opportunity_title", "name") ??
+          `Opportunity from Cluster ${result.cluster}`,
+        score:
+          readNumber("score", "opportunity_score") ?? 0,
+        problem:
+          readText("problem", "problem_statement", "pain_point") ??
+          result.summary,
+        whyNow:
+          readText("whyNow", "why_now", "timing") ??
+          "Further trend data is needed to explain why this opportunity matters now.",
+        aiSolution:
+          readText("aiSolution", "ai_solution", "solution") ??
+          "Review this cluster to identify a suitable product solution.",
+        targetUsers:
+          readText("targetUsers", "target_users", "customer_segment") ??
+          "Target users have not been specified by the analysis.",
+        businessPotential,
+        confidence:
+          readNumber("confidence", "confidence_score") ?? 0,
+        mvpFeatures: readFeatures(),
+      };
+    });
+
   return (
     <section>
-
-      {/* Section Header */}
       <div className="mb-5">
-
         <h2 className="text-2xl font-semibold text-white">
           Opportunity Intelligence
         </h2>
 
         <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-400">
-          AI-generated business opportunities based on customer pain,
-          demand, emerging trends, and potential solutions.
+          Business opportunities generated from the analyzed
+          repository's complaint clusters.
         </p>
-
       </div>
 
-
-      {/* Opportunity */}
-      <OpportunityDetails
-        title={opportunity.title}
-        score={opportunity.score}
-        problem={opportunity.problem}
-        whyNow={opportunity.whyNow}
-        aiSolution={opportunity.aiSolution}
-        targetUsers={opportunity.targetUsers}
-        businessPotential={opportunity.businessPotential}
-        confidence={opportunity.confidence}
-        mvpFeatures={opportunity.mvpFeatures}
-      />
-
+      {opportunities.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-8 text-center">
+          <p className="text-sm text-slate-400">
+            No opportunities are available yet. Complete a repository
+            analysis that produces opportunity results to see them here.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {opportunities.map((opportunity) => (
+            <OpportunityDetails
+              key={opportunity.cluster}
+              title={opportunity.title}
+              score={opportunity.score}
+              problem={opportunity.problem}
+              whyNow={opportunity.whyNow}
+              aiSolution={opportunity.aiSolution}
+              targetUsers={opportunity.targetUsers}
+              businessPotential={opportunity.businessPotential}
+              confidence={opportunity.confidence}
+              mvpFeatures={opportunity.mvpFeatures}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

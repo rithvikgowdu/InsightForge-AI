@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 
-import AnalysisSearch from "../components/analysis/AnalysisSearch";
+import RepositoryAnalysisForm from "../components/analysis/RepositoryAnalysisForm";
 import AnalysisStatus from "../components/analysis/AnalysisStatus";
 import AnalysisFilters from "../components/analysis/AnalysisFilters";
 import AnalysisSummary from "../components/analysis/AnalysisSummary";
@@ -11,59 +12,51 @@ import ClassificationBreakdown from "../components/analysis/ClassificationBreakd
 import FeatureRequestList from "../components/analysis/FeatureRequestList";
 import TrendIntelligence from "../components/analysis/TrendIntelligence";
 import OpportunityIntelligence from "../components/analysis/OpportunityIntelligence";
-import {
-  startAnalysis,
-  type Analysis as AnalysisType,
-} from "../services/api";
+import type { Analysis as AnalysisType } from "../services/api";
 
 function Analysis() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [selectedAnalysis, setSelectedAnalysis] =
     useState<AnalysisType | null>(null);
 
-  const analysisSummary = {
-    industry: searchQuery || "Food Delivery",
-    totalMentions: 1284,
-    complaintClusters: 42,
-    featureRequests: 17,
-    opportunities: 8,
-  };
+  const clusters = selectedAnalysis?.results?.clusters ?? [];
 
-  const handleSearch = async (
-    owner: string,
-    repository: string,
-    limit: number
-  ) => {
-    setLoading(true);
-    setError("");
-    setSelectedAnalysis(null);
-    setSearchQuery(`${owner}/${repository}`);
+  const opportunities = clusters.filter(
+    (cluster) => cluster.opportunity != null
+  );
 
-    try {
-      const analysis = await startAnalysis({
-        owner,
-        repository,
-        limit,
-      });
+  const featureRequestCount = clusters.reduce((total, cluster) => {
+    const opportunity = cluster.opportunity;
 
-      setSelectedAnalysis(analysis);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to start the analysis."
-      );
-    } finally {
-      setLoading(false);
+    if (!opportunity || typeof opportunity !== "object") {
+      return total;
     }
+
+    const data = opportunity as Record<string, unknown>;
+    const features =
+      data.featureRequests ??
+      data.feature_requests ??
+      data.features ??
+      data.mvpFeatures ??
+      data.mvp_features;
+
+    return total + (Array.isArray(features)
+      ? features.filter((feature) => typeof feature === "string").length
+      : 0);
+  }, 0);
+
+  const analysisSummary = {
+    industry: selectedAnalysis?.repository || "GitHub Repository",
+    totalMentions: clusters.reduce(
+      (total, cluster) => total + cluster.documents,
+      0
+    ),
+    complaintClusters: selectedAnalysis?.total_clusters ?? 0,
+    featureRequests: featureRequestCount,
+    opportunities: opportunities.length,
   };
 
   return (
     <main className="w-full min-w-0 space-y-8">
-
-      {/* Page Header */}
       <section>
         <p className="text-sm font-medium text-blue-400">
           Product Intelligence
@@ -80,24 +73,8 @@ function Analysis() {
         </p>
       </section>
 
-      {/* Search */}
-      <section aria-label="Analysis search">
-        <AnalysisSearch
-          onSearch={handleSearch}
-          loading={loading}
-        />
+      <RepositoryAnalysisForm onStarted={setSelectedAnalysis} />
 
-        {error && (
-          <div
-            role="alert"
-            className="mt-3 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
-          >
-            {error}
-          </div>
-        )}
-      </section>
-
-      {/* Analysis Status */}
       {selectedAnalysis && (
         <AnalysisStatus
           analysis={selectedAnalysis}
@@ -105,12 +82,10 @@ function Analysis() {
         />
       )}
 
-      {/* Filters */}
       <section aria-label="Analysis filters">
         <AnalysisFilters />
       </section>
 
-      {/* Summary */}
       <AnalysisSummary
         industry={analysisSummary.industry}
         totalMentions={analysisSummary.totalMentions}
@@ -119,34 +94,22 @@ function Analysis() {
         opportunities={analysisSummary.opportunities}
       />
 
-      {/* Complaint Clusters */}
-     <ComplaintClusters
-  results={selectedAnalysis?.results ?? []}
-/>
+      <ComplaintClusters results={clusters} />
 
-      {/* Complaint Details */}
-      <ComplaintDetailsSection />
+      <ComplaintDetailsSection results={clusters} />
 
-      {/* Intelligence */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-
-        <SentimentOverview
-          negative={68}
-          neutral={22}
-          positive={10}
-        />
+        <SentimentOverview />
 
         <ClassificationBreakdown />
 
-        <FeatureRequestList />
+        <FeatureRequestList results={clusters} />
 
-        <TrendIntelligence />
+        <TrendIntelligence results={clusters} />
 
-        <OpportunityIntelligence />
-
+        <OpportunityIntelligence results={clusters} />
       </div>
 
-      {/* Empty State */}
       {!selectedAnalysis && (
         <section
           aria-labelledby="start-analysis-title"
@@ -166,7 +129,6 @@ function Analysis() {
           </p>
         </section>
       )}
-
     </main>
   );
 }
