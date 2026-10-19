@@ -15,9 +15,6 @@ import ReportTrends from "../components/reports/ReportTrends";
 import ReportFeatureRequests from "../components/reports/ReportFeatureRequests";
 import RecommendedMVP from "../components/reports/RecommendedMVP";
 
-import SentimentOverview from "../components/analysis/SentimentOverview";
-import ClassificationBreakdown from "../components/analysis/ClassificationBreakdown";
-
 function Report() {
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [selectedId, setSelectedId] = useState("");
@@ -75,9 +72,40 @@ function Report() {
     0
   );
 
+  const opportunityCount = clusters.filter(
+    (cluster) => cluster.opportunity != null
+  ).length;
+
   const summary = analysis
-    ? `Analysis of ${analysis.repository} identified ${clusters.length} complaint clusters containing ${totalMentions} associated documents. This summary is based on the saved analysis results.`
+    ? `Analysis of ${analysis.repository} identified ${clusters.length} complaint clusters containing ${totalMentions} associated documents and ${opportunityCount} clusters with identified opportunities. This summary is based on the saved analysis results.`
     : "A report will be available after an analysis completes successfully.";
+
+  const reportContent = [
+    "INSIGHTFORGE AI — REPOSITORY INTELLIGENCE REPORT",
+    `Repository: ${analysis?.repository ?? "Unavailable"}`,
+    `Generated: ${
+      analysis?.created_at
+        ? new Date(analysis.created_at).toLocaleString()
+        : "Date unavailable"
+    }`,
+    "",
+    "EXECUTIVE SUMMARY",
+    summary,
+    "",
+    "KEY FINDINGS",
+    ...clusters.map(
+      (cluster) =>
+        `Cluster ${cluster.cluster}: ${cluster.summary} (${cluster.documents} discussions; Pain Score: ${typeof cluster.pain_score === "number" ? cluster.pain_score : "Unavailable"}; Growth: ${typeof cluster.growth === "number" ? `${cluster.growth}%` : "Unavailable"})`
+    ),
+    "",
+    "PRODUCT OPPORTUNITIES",
+    ...clusters
+      .filter((cluster) => cluster.opportunity != null)
+      .map(
+        (cluster) =>
+          `Cluster ${cluster.cluster}: ${JSON.stringify(cluster.opportunity, null, 2)}`
+      ),
+  ].join("\n");
 
   return (
     <main className="w-full min-w-0 space-y-8">
@@ -135,35 +163,16 @@ function Report() {
 
           {analysis && (
             <>
-              
-<ReportHeader
-  title={`Repository Intelligence: ${analysis.repository}`}
-  industry={analysis.repository}
-  generatedAt={
-    analysis.created_at
-      ? new Date(analysis.created_at).toLocaleString()
-      : "Date unavailable"
-  }
-  reportContent={[
-    "EXECUTIVE SUMMARY",
-    summary,
-    "",
-    "KEY FINDINGS",
-    ...clusters.map(
-      (cluster) =>
-        `Cluster ${cluster.cluster}: ${cluster.summary} (${cluster.documents} discussions)`
-    ),
-    "",
-    "PRODUCT OPPORTUNITIES",
-    ...clusters
-      .filter((cluster) => cluster.opportunity != null)
-      .map(
-        (cluster) =>
-          `Cluster ${cluster.cluster}: ${JSON.stringify(cluster.opportunity)}`
-      ),
-  ].join("\n")}
-/>
-
+              <ReportHeader
+                title={`Repository Intelligence: ${analysis.repository}`}
+                industry={analysis.repository}
+                generatedAt={
+                  analysis.created_at
+                    ? new Date(analysis.created_at).toLocaleString()
+                    : "Date unavailable"
+                }
+                reportContent={reportContent}
+              />
 
               <ReportMetadata
                 sources={["GitHub"]}
@@ -179,10 +188,6 @@ function Report() {
               <ReportProblems results={clusters} />
 
               <ReportTrends results={clusters} />
-
-              <SentimentOverview />
-
-              <ClassificationBreakdown />
 
               <ReportFeatureRequests results={clusters} />
 

@@ -25,22 +25,18 @@ function AnalysisStatus({
 }: AnalysisStatusProps) {
   const [currentAnalysis, setCurrentAnalysis] =
     useState<Analysis | null>(null);
-
   const [statusData, setStatusData] =
     useState<StatusData | null>(null);
-
   const [error, setError] = useState("");
+  const [loadingResults, setLoadingResults] = useState(false);
 
   const onCompletedRef = useRef(onCompleted);
+  const fetchedIdsRef = useRef(new Set<number>());
 
   useEffect(() => {
     onCompletedRef.current = onCompleted;
   }, [onCompleted]);
 
-  /*
-   * Initialize the selected analysis.
-   * If it is already completed, fetch its saved results.
-   */
   useEffect(() => {
     let cancelled = false;
 
@@ -48,14 +44,15 @@ function AnalysisStatus({
       setCurrentAnalysis(null);
       setStatusData(null);
       setError("");
+      setLoadingResults(false);
 
       return () => {
         cancelled = true;
       };
     }
 
-    setError("");
     setCurrentAnalysis(null);
+    setError("");
 
     setStatusData({
       id: analysis.id,
@@ -64,40 +61,47 @@ function AnalysisStatus({
       total_clusters: analysis.total_clusters,
     });
 
-    if (analysis.status === "completed") {
-      getAnalysis(analysis.id)
-        .then((completedAnalysis) => {
-          if (cancelled) return;
+    async function loadCompletedResults() {
+      if (!analysis || analysis.status !== "completed") return;
+      if (fetchedIdsRef.current.has(analysis.id)) return;
 
-          setCurrentAnalysis(completedAnalysis);
-          setStatusData({
-            id: completedAnalysis.id,
-            repository: completedAnalysis.repository,
-            status: completedAnalysis.status,
-            total_clusters: completedAnalysis.total_clusters,
-          });
+      fetchedIdsRef.current.add(analysis.id);
+      setLoadingResults(true);
 
-          onCompletedRef.current?.(completedAnalysis);
-        })
-        .catch((err: unknown) => {
-          if (cancelled) return;
+      try {
+        const result = await getAnalysis(analysis.id);
+        if (cancelled) return;
 
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Unable to load completed analysis results."
-          );
+        setCurrentAnalysis(result);
+        setStatusData({
+          id: result.id,
+          repository: result.repository,
+          status: result.status,
+          total_clusters: result.total_clusters,
         });
+
+        onCompletedRef.current?.(result);
+      } catch (err) {
+        fetchedIdsRef.current.delete(analysis.id);
+        if (cancelled) return;
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load completed analysis results."
+        );
+      } finally {
+        if (!cancelled) setLoadingResults(false);
+      }
     }
+
+    void loadCompletedResults();
 
     return () => {
       cancelled = true;
     };
   }, [analysis?.id, analysis?.status]);
 
-  /*
-   * Poll while the analysis is pending or running.
-   */
   useEffect(() => {
     if (!statusData) return;
 
@@ -110,40 +114,70 @@ function AnalysisStatus({
 
     let cancelled = false;
     let checking = false;
+    let interval: number | undefined;
 
     async function checkStatus() {
-      if (checking) return;
+      if (checking || cancelled) return;
       checking = true;
 
       try {
-        const updatedStatus = await getAnalysisStatus(
-          statusData!.id
-        );
-
+        const updated = await getAnalysisStatus(statusData!.id);
         if (cancelled) return;
 
         setStatusData({
-          id: updatedStatus.id,
-          repository: updatedStatus.repository,
-          status: updatedStatus.status,
-          total_clusters: updatedStatus.total_clusters,
+          id: updated.id,
+          repository: updated.repository,
+          status: updated.status,
+          total_clusters: updated.total_clusters,
         });
 
-        if (updatedStatus.status === "completed") {
-          const completedAnalysis = await getAnalysis(
-            updatedStatus.id
-          );
-
-          if (cancelled) return;
-
-          setCurrentAnalysis(completedAnalysis);
-          onCompletedRef.current?.(completedAnalysis);
+        if (
+          updated.status === "completed" ||
+          updated.status === "failed"
+        ) {
+          if (interval !== undefined) {
+            window.clearInterval(interval);
+            interval = undefined;
+          }
         }
 
-        if (updatedStatus.status === "failed") {
+        if (updated.status === "completed") {
+          const id = updated.id;
+
+          if (!fetchedIdsRef.current.has(id)) {
+            fetchedIdsRef.current.add(id);
+            setLoadingResults(true);
+
+            try {
+              const result = await getAnalysis(id);
+              if (cancelled) return;
+
+              setCurrentAnalysis(result);
+              setStatusData({
+                id: result.id,
+                repository: result.repository,
+                status: result.status,
+                total_clusters: result.total_clusters,
+              });
+
+              onCompletedRef.current?.(result);
+            } catch (err) {
+              fetchedIdsRef.current.delete(id);
+              if (cancelled) return;
+
+              setError(
+                err instanceof Error
+                  ? err.message
+                  : "Unable to load completed analysis results."
+              );
+            } finally {
+              if (!cancelled) setLoadingResults(false);
+            }
+          }
+        } else if (updated.status === "failed") {
           setError("The analysis failed. Please try again.");
         }
-      } catch (err: unknown) {
+      } catch (err) {
         if (cancelled) return;
 
         setError(
@@ -158,32 +192,35 @@ function AnalysisStatus({
 
     void checkStatus();
 
-    const interval = window.setInterval(() => {
+    interval = window.setInterval(() => {
       void checkStatus();
     }, 3000);
 
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
+      if (interval !== undefined) {
+        window.clearInterval(interval);
+      }
     };
   }, [statusData?.id, statusData?.status]);
 
   if (!statusData) return null;
 
   const status = statusData.status;
+  const clusters = currentAnalysis?.results?.clusters ?? [];
 
   const statusMessage =
     status === "pending"
       ? "Analysis is waiting to start..."
       : status === "running" || status === "processing"
       ? "Analysis is currently running..."
+      : status === "completed" && loadingResults
+      ? "Analysis completed. Loading results..."
       : status === "completed"
       ? "Analysis completed successfully."
       : status === "failed"
       ? "Analysis failed."
       : "Checking analysis status...";
-
-  const clusters = currentAnalysis?.results?.clusters ?? [];
 
   return (
     <section
@@ -210,16 +247,13 @@ function AnalysisStatus({
         </div>
 
         <span
-          className={`
-            w-fit rounded-full px-3 py-1 text-xs font-medium
-            ${
-              status === "completed"
-                ? "bg-green-500/10 text-green-400"
-                : status === "failed"
-                ? "bg-red-500/10 text-red-400"
-                : "bg-blue-500/10 text-blue-400"
-            }
-          `}
+          className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${
+            status === "completed"
+              ? "bg-green-500/10 text-green-400"
+              : status === "failed"
+              ? "bg-red-500/10 text-red-400"
+              : "bg-blue-500/10 text-blue-400"
+          }`}
         >
           {status}
         </span>
@@ -241,7 +275,6 @@ function AnalysisStatus({
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
               Complaint Clusters
             </p>
-
             <p className="mt-2 text-2xl font-bold text-white">
               {statusData.total_clusters}
             </p>
@@ -251,12 +284,17 @@ function AnalysisStatus({
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
               Results
             </p>
-
             <p className="mt-2 text-2xl font-bold text-white">
-              {clusters.length}
+              {loadingResults ? "…" : clusters.length}
             </p>
           </div>
         </div>
+      )}
+
+      {loadingResults && (
+        <p className="mt-6 text-sm text-slate-400">
+          Loading saved cluster results…
+        </p>
       )}
 
       {status === "completed" && clusters.length > 0 && (
@@ -284,6 +322,12 @@ function AnalysisStatus({
                 <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-400">
                   {result.summary}
                 </p>
+
+                {typeof result.pain_score === "number" && (
+                  <p className="mt-3 text-sm text-emerald-400">
+                    Estimated Pain Score: {result.pain_score.toFixed(1)}/10
+                  </p>
+                )}
 
                 {result.opportunity && (
                   <div className="mt-4 border-t border-slate-800 pt-4">
@@ -333,12 +377,12 @@ function AnalysisStatus({
       )}
 
       {status === "completed" &&
+        !loadingResults &&
         clusters.length === 0 &&
         !error && (
           <div className="mt-6 rounded-lg border border-dashed border-slate-700 bg-slate-950 p-5">
             <p className="text-sm text-slate-400">
-              Loading saved cluster results, or no cluster results
-              are available.
+              No cluster results were returned for this analysis.
             </p>
           </div>
         )}

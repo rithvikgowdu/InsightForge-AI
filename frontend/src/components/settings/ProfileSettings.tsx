@@ -17,9 +17,11 @@ const defaultProfile: Profile = {
 
 function ProfileSettings() {
   const { user } = useAuth();
+
   const [profile, setProfile] = useState<Profile>(defaultProfile);
   const [saved, setSaved] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState("");
 
   const storageKey = user
     ? `insightforge-profile-${user.id}`
@@ -28,12 +30,21 @@ function ProfileSettings() {
   useEffect(() => {
     setLoaded(false);
     setSaved(false);
-    setProfile(defaultProfile);
+    setError("");
 
-    if (!storageKey) {
+    if (!user || !storageKey) {
+      setProfile(defaultProfile);
       setLoaded(true);
       return;
     }
+
+    const initialProfile: Profile = {
+      ...defaultProfile,
+      email:
+        "email" in user && typeof user.email === "string"
+          ? user.email
+          : "",
+    };
 
     try {
       const storedProfile = localStorage.getItem(storageKey);
@@ -41,46 +52,79 @@ function ProfileSettings() {
       if (storedProfile) {
         const parsed: unknown = JSON.parse(storedProfile);
 
-        if (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          "name" in parsed &&
-          "email" in parsed &&
-          "role" in parsed &&
-          typeof parsed.name === "string" &&
-          typeof parsed.email === "string" &&
-          typeof parsed.role === "string"
-        ) {
+        if (typeof parsed === "object" && parsed !== null) {
+          const data = parsed as Record<string, unknown>;
+
           setProfile({
-            name: parsed.name,
-            email: parsed.email,
-            role: parsed.role,
+            name:
+              typeof data.name === "string"
+                ? data.name
+                : initialProfile.name,
+            email:
+              typeof data.email === "string"
+                ? data.email
+                : initialProfile.email,
+            role:
+              typeof data.role === "string"
+                ? data.role
+                : initialProfile.role,
           });
+        } else {
+          setProfile(initialProfile);
         }
+      } else {
+        setProfile(initialProfile);
       }
     } catch {
-      // Keep the default profile if stored data is unavailable.
+      setProfile(initialProfile);
+      setError("Could not read the saved profile from this browser.");
     } finally {
       setLoaded(true);
     }
-  }, [storageKey]);
+  }, [storageKey, user]);
 
   function updateField(field: keyof Profile, value: string) {
     setProfile((current) => ({
       ...current,
       [field]: value,
     }));
+
     setSaved(false);
+    setError("");
   }
 
   function handleSave() {
-    if (!storageKey) return;
+    if (!storageKey) {
+      setError("Please sign in before saving your profile.");
+      return;
+    }
+
+    if (!profile.name.trim()) {
+      setError("Please enter your full name.");
+      return;
+    }
+
+    if (!profile.email.trim()) {
+      setError("Please enter your email address.");
+      return;
+    }
 
     try {
-      localStorage.setItem(storageKey, JSON.stringify(profile));
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          ...profile,
+          name: profile.name.trim(),
+          email: profile.email.trim(),
+          role: profile.role.trim(),
+        })
+      );
+
       setSaved(true);
+      setError("");
     } catch {
       setSaved(false);
+      setError("Unable to save the profile in this browser.");
     }
   }
 
@@ -103,14 +147,18 @@ function ProfileSettings() {
           >
             Full name
           </label>
+
           <input
             id="profile-name"
             type="text"
             autoComplete="name"
             value={profile.name}
-            onChange={(event) => updateField("name", event.target.value)}
+            onChange={(event) =>
+              updateField("name", event.target.value)
+            }
             className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
             disabled={!loaded || !user}
+            required
           />
         </div>
 
@@ -121,14 +169,18 @@ function ProfileSettings() {
           >
             Email address
           </label>
+
           <input
             id="profile-email"
             type="email"
             autoComplete="email"
             value={profile.email}
-            onChange={(event) => updateField("email", event.target.value)}
+            onChange={(event) =>
+              updateField("email", event.target.value)
+            }
             className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
             disabled={!loaded || !user}
+            required
           />
         </div>
 
@@ -139,15 +191,27 @@ function ProfileSettings() {
           >
             Role
           </label>
+
           <input
             id="profile-role"
             type="text"
             value={profile.role}
-            onChange={(event) => updateField("role", event.target.value)}
+            onChange={(event) =>
+              updateField("role", event.target.value)
+            }
             className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
             disabled={!loaded || !user}
           />
         </div>
+
+        {error && (
+          <p
+            role="alert"
+            className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+          >
+            {error}
+          </p>
+        )}
 
         {saved && (
           <p

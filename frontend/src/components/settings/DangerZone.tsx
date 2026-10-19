@@ -8,8 +8,13 @@ function DangerZone() {
   function handleDelete() {
     setConfirming(false);
     setMessage(
-      "Account deletion is not available yet. No account or data has been deleted."
+      "Account deletion is not implemented. No account or data has been deleted."
     );
+  }
+
+  function handleCancel() {
+    setConfirming(false);
+    setMessage("");
   }
 
   return (
@@ -50,6 +55,7 @@ function DangerZone() {
           role="alertdialog"
           aria-modal="true"
           aria-labelledby="delete-account-title"
+          aria-describedby="delete-account-description"
           className="mt-5 rounded-lg border border-red-500/20 bg-red-500/10 p-5"
         >
           <h3
@@ -59,9 +65,13 @@ function DangerZone() {
             Account deletion is not available yet
           </h3>
 
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            The account deletion API has not been implemented. Confirming
-            here will not delete your account or any data.
+          <p
+            id="delete-account-description"
+            className="mt-2 text-sm leading-6 text-slate-300"
+          >
+            The account deletion API has not been implemented. Continuing
+            will only acknowledge this limitation; it will not delete
+            your account or any data.
           </p>
 
           <div className="mt-4 flex flex-wrap gap-3">
@@ -75,7 +85,7 @@ function DangerZone() {
 
             <button
               type="button"
-              onClick={() => setConfirming(false)}
+              onClick={handleCancel}
               className="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
             >
               Cancel
@@ -87,6 +97,7 @@ function DangerZone() {
       {message && (
         <p
           role="status"
+          aria-live="polite"
           className="mt-4 rounded-lg border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm leading-6 text-yellow-300"
         >
           {message}

@@ -1,3 +1,4 @@
+
 import ClusterCard from "./ClusterCard";
 import type { AnalysisResult } from "../../services/api";
 
@@ -8,53 +9,47 @@ type ComplaintClustersProps = {
 function ComplaintClusters({
   results = [],
 }: ComplaintClustersProps) {
-  const clusters = results
-    .filter(
-      (result) =>
-        result.cluster !== undefined &&
-        result.documents !== undefined &&
-        result.summary !== undefined
-    )
-    .map((result) => ({
-      title: `Cluster ${String(result.cluster)}`,
-      mentions: Number(result.documents) || 0,
-      summary: String(result.summary),
-    }));
-
-  return (
-    <section>
-      {/* Section Header */}
-      <div className="mb-5">
-        <h2 className="text-2xl font-semibold text-white">
+  if (results.length === 0) {
+    return (
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold">
           Complaint Clusters
         </h2>
-
-        <p className="mt-1 text-sm leading-6 text-slate-400">
-          Recurring customer problems identified by the AI
-          clustering system.
+        <p className="text-sm text-slate-400">
+          No complaint clusters are available for this analysis yet.
         </p>
-      </div>
+      </section>
+    );
+  }
 
-      {/* Empty State */}
-      {clusters.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-8 text-center">
-          <p className="text-sm text-slate-400">
-            No complaint clusters are available yet.
-          </p>
-        </div>
-      ) : (
-        /* Cluster Grid */
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {clusters.map((cluster) => (
-            <ClusterCard
-              key={cluster.title}
-              title={cluster.title}
-              mentions={cluster.mentions}
-              summary={cluster.summary}
-            />
-          ))}
-        </div>
-      )}
+  return (
+    <section className="space-y-4">
+      <h2 className="text-xl font-semibold">
+        Complaint Clusters
+      </h2>
+
+      <div className="grid grid-cols-1 gap-4">
+        {results.map((result) => (
+          <ClusterCard
+            key={result.cluster}
+            title={`Cluster ${result.cluster + 1}`}
+            mentions={result.documents}
+            summary={result.summary}
+            painScore={
+              typeof result.pain_score === "number" &&
+              Number.isFinite(result.pain_score)
+                ? result.pain_score
+                : undefined
+            }
+            growth={
+              typeof result.growth === "number" &&
+              Number.isFinite(result.growth)
+                ? result.growth
+                : undefined
+            }
+          />
+        ))}
+      </div>
     </section>
   );
 }

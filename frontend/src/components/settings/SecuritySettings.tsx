@@ -2,19 +2,28 @@
 import { useState } from "react";
 import SettingsSection from "./SettingsSection";
 
+type SecurityMessage = {
+  title: string;
+  description: string;
+};
+
 function SecuritySettings() {
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<SecurityMessage | null>(null);
 
   function handlePasswordChange() {
-    setMessage(
-      "Password changes are not available yet. The backend password-change flow still needs to be implemented."
-    );
+    setMessage({
+      title: "Password change unavailable",
+      description:
+        "Password changes have not been implemented yet. A secure backend password-change flow is required before you can change your password here.",
+    });
   }
 
   function handleTwoFactor() {
-    setMessage(
-      "Two-factor authentication is not configured. Backend support is required before this feature can be enabled."
-    );
+    setMessage({
+      title: "Two-factor authentication unavailable",
+      description:
+        "Two-factor authentication is not configured. Backend support and a verification flow are required before this feature can be enabled.",
+    });
   }
 
   return (
@@ -27,9 +36,9 @@ function SecuritySettings() {
           <div>
             <p className="font-medium text-white">Password</p>
 
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm leading-6 text-slate-400">
               Your account uses the password configured during registration.
-              Password changes are not currently available here.
+              Password changes are not currently available in this page.
             </p>
           </div>
 
@@ -48,7 +57,7 @@ function SecuritySettings() {
               Two-factor authentication
             </p>
 
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm leading-6 text-slate-400">
               Additional account verification is not currently configured.
             </p>
           </div>
@@ -65,15 +74,23 @@ function SecuritySettings() {
         {message && (
           <div
             role="status"
-            className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-3 text-sm leading-6 text-blue-300"
+            aria-live="polite"
+            className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-3"
           >
-            {message}
+            <p className="text-sm font-medium text-blue-300">
+              {message.title}
+            </p>
+
+            <p className="mt-1 text-sm leading-6 text-slate-300">
+              {message.description}
+            </p>
           </div>
         )}
 
         <p className="text-xs leading-5 text-slate-500">
-          Security changes must be enforced by the backend. This page does
-          not change your password or enable two-factor authentication.
+          These buttons display informational messages only. They do not
+          change your password or enable two-factor authentication.
+          Security changes must be implemented and enforced by the backend.
         </p>
       </div>
     </SettingsSection>

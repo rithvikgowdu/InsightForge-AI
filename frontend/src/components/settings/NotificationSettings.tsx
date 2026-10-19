@@ -22,6 +22,7 @@ function NotificationSettings() {
     useState<NotificationPreferences>(defaultPreferences);
   const [saved, setSaved] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState("");
 
   const storageKey = user
     ? `insightforge-notifications-${user.id}`
@@ -30,6 +31,7 @@ function NotificationSettings() {
   useEffect(() => {
     setLoaded(false);
     setSaved(false);
+    setError("");
     setPreferences(defaultPreferences);
 
     if (!storageKey) {
@@ -43,25 +45,29 @@ function NotificationSettings() {
       if (stored) {
         const parsed: unknown = JSON.parse(stored);
 
-        if (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          "opportunityAlerts" in parsed &&
-          "trendAlerts" in parsed &&
-          "reportAlerts" in parsed &&
-          typeof parsed.opportunityAlerts === "boolean" &&
-          typeof parsed.trendAlerts === "boolean" &&
-          typeof parsed.reportAlerts === "boolean"
-        ) {
+        if (typeof parsed === "object" && parsed !== null) {
+          const data = parsed as Record<string, unknown>;
+
           setPreferences({
-            opportunityAlerts: parsed.opportunityAlerts,
-            trendAlerts: parsed.trendAlerts,
-            reportAlerts: parsed.reportAlerts,
+            opportunityAlerts:
+              typeof data.opportunityAlerts === "boolean"
+                ? data.opportunityAlerts
+                : defaultPreferences.opportunityAlerts,
+            trendAlerts:
+              typeof data.trendAlerts === "boolean"
+                ? data.trendAlerts
+                : defaultPreferences.trendAlerts,
+            reportAlerts:
+              typeof data.reportAlerts === "boolean"
+                ? data.reportAlerts
+                : defaultPreferences.reportAlerts,
           });
         }
       }
     } catch {
-      // Use defaults if saved preferences cannot be read.
+      setError(
+        "Could not load saved notification preferences. You can select your options and save again."
+      );
     } finally {
       setLoaded(true);
     }
@@ -77,26 +83,35 @@ function NotificationSettings() {
     }));
 
     setSaved(false);
+    setError("");
   }
 
   function handleSave() {
-    if (!storageKey) return;
+    if (!storageKey) {
+      setError("Please sign in before saving notification preferences.");
+      return;
+    }
 
     try {
       localStorage.setItem(
         storageKey,
         JSON.stringify(preferences)
       );
+
       setSaved(true);
+      setError("");
     } catch {
       setSaved(false);
+      setError(
+        "Unable to save notification preferences in this browser."
+      );
     }
   }
 
   return (
     <SettingsSection
       title="Notifications"
-      description="Choose your notification preferences for InsightForge."
+      description="Choose your notification preferences for InsightForge. These preferences are saved in this browser."
     >
       <form
         className="space-y-5"
@@ -114,6 +129,7 @@ function NotificationSettings() {
               Enable your preference for new product opportunity alerts.
             </p>
           </div>
+
           <input
             type="checkbox"
             checked={preferences.opportunityAlerts}
@@ -134,6 +150,7 @@ function NotificationSettings() {
               Enable your preference for important complaint or demand trend alerts.
             </p>
           </div>
+
           <input
             type="checkbox"
             checked={preferences.trendAlerts}
@@ -154,6 +171,7 @@ function NotificationSettings() {
               Enable your preference for notifications when reports are ready.
             </p>
           </div>
+
           <input
             type="checkbox"
             checked={preferences.reportAlerts}
@@ -164,6 +182,15 @@ function NotificationSettings() {
             className="mt-1 h-4 w-4 shrink-0 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
           />
         </label>
+
+        {error && (
+          <p
+            role="alert"
+            className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+          >
+            {error}
+          </p>
+        )}
 
         {saved && (
           <p

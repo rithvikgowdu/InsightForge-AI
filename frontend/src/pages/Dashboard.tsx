@@ -52,25 +52,46 @@ function Dashboard() {
     };
   }, []);
 
-  const completedAnalyses = analyses.filter(
-    (analysis) => analysis.status === "completed"
+  const completedAnalyses = analyses
+    .filter((analysis) => analysis.status === "completed")
+    .sort((a, b) => {
+      const aTime = a.created_at
+        ? new Date(a.created_at).getTime()
+        : 0;
+      const bTime = b.created_at
+        ? new Date(b.created_at).getTime()
+        : 0;
+
+      return bTime - aTime;
+    });
+
+  const allClusters = completedAnalyses.flatMap(
+    (analysis) => analysis.results?.clusters ?? []
   );
 
-  const opportunities = completedAnalyses
-    .flatMap((analysis) => analysis.results?.clusters ?? [])
-    .filter((cluster) => cluster.opportunity != null);
-
-  const trendingTopics = completedAnalyses.flatMap(
-    (analysis) => analysis.results?.clusters ?? []
+  const opportunities = allClusters.filter(
+    (cluster) => cluster.opportunity != null
   );
 
   const latestAnalysis = completedAnalyses[0];
   const latestClusters = latestAnalysis?.results?.clusters ?? [];
   const latestCluster = latestClusters[0];
 
-  const trendData = completedAnalyses
-    .slice(0, 4)
+  const painScore =
+    typeof latestCluster?.pain_score === "number" &&
+    Number.isFinite(latestCluster.pain_score)
+      ? latestCluster.pain_score
+      : null;
+
+  const growth =
+    typeof latestCluster?.growth === "number" &&
+    Number.isFinite(latestCluster.growth)
+      ? latestCluster.growth
+      : null;
+
+  const trendData = [...completedAnalyses]
     .reverse()
+    .slice(-6)
     .map((analysis) => ({
       month: analysis.created_at
         ? new Date(analysis.created_at).toLocaleDateString(
@@ -83,6 +104,24 @@ function Dashboard() {
         0
       ),
     }));
+
+  const featureRequests = allClusters.filter((cluster) => {
+    const opportunity = cluster.opportunity;
+
+    if (!opportunity || typeof opportunity !== "object") {
+      return false;
+    }
+
+    const data = opportunity as Record<string, unknown>;
+
+    return (
+      Array.isArray(data.mvp_features) &&
+      data.mvp_features.some(
+        (feature) =>
+          typeof feature === "string" && feature.trim().length > 0
+      )
+    );
+  });
 
   return (
     <main className="w-full min-w-0 space-y-8">
@@ -113,7 +152,7 @@ function Dashboard() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <StatsCard
             title="Total Analyses"
-            value={loading ? "..." : String(analyses.length)}
+            value={loading ? "..." : String(completedAnalyses.length)}
           />
 
           <StatsCard
@@ -123,7 +162,7 @@ function Dashboard() {
 
           <StatsCard
             title="Trending Topics"
-            value={loading ? "..." : String(trendingTopics.length)}
+            value={loading ? "..." : String(allClusters.length)}
           />
         </div>
 
@@ -153,21 +192,40 @@ function Dashboard() {
             <ComplaintCard
               title={`Complaint Cluster ${latestCluster.cluster}`}
               mentions={latestCluster.documents}
-              painScore={null}
+              painScore={painScore}
               summary={latestCluster.summary}
             />
 
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-lg">
-              <p className="text-sm text-slate-400">
-                Pain Score
-              </p>
+              <p className="text-sm text-slate-400">Pain Score</p>
+
               <p className="mt-2 text-2xl font-bold text-white">
-                Not calculated
+                {painScore !== null
+                  ? `${painScore.toFixed(1)}/10`
+                  : "Not available"}
               </p>
+
               <p className="mt-3 text-sm text-slate-400">
-                A pain score is not currently provided by the analysis
-                API. No score has been inferred.
+                Estimated from complaint severity, cluster frequency,
+                and GitHub comment activity. This is a heuristic,
+                not a validated measure of user impact.
               </p>
+
+              <div className="mt-5 border-t border-slate-800 pt-4">
+                <p className="text-sm text-slate-400">
+                  Complaint Growth
+                </p>
+
+                <p className="mt-2 text-xl font-semibold text-white">
+                  {growth !== null
+                    ? `${growth > 0 ? "+" : ""}${growth.toFixed(1)}%`
+                    : "Not available"}
+                </p>
+
+                <p className="mt-2 text-xs text-slate-500">
+                  Compared across the backend's configured time windows.
+                </p>
+              </div>
             </div>
           </div>
         ) : (
@@ -189,8 +247,8 @@ function Dashboard() {
           </h2>
 
           <p className="mt-1 text-sm text-slate-400">
-            Document counts from your recent completed analyses.
-            These are not historical growth measurements.
+            Document counts from recent completed analyses, not a
+            prediction of future trends.
           </p>
         </div>
 
@@ -218,10 +276,56 @@ function Dashboard() {
         </div>
 
         {opportunities.length > 0 ? (
-          <p className="rounded-xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-300">
-            {opportunities.length} opportunity-bearing clusters found
-            across your completed analyses.
-          </p>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {opportunities.slice(0, 4).map((cluster) => {
+              const opportunity =
+                cluster.opportunity as Record<string, unknown>;
+
+              const title =
+                typeof opportunity.problem_statement === "string"
+                  ? opportunity.problem_statement
+                  : `Opportunity from Cluster ${cluster.cluster}`;
+
+              const description =
+                typeof opportunity.business_opportunity === "string"
+                  ? opportunity.business_opportunity
+                  : cluster.summary;
+
+              const score =
+                typeof opportunity.opportunity_score === "number"
+                  ? opportunity.opportunity_score
+                  : null;
+
+              return (
+                <article
+                  key={cluster.cluster}
+                  className="rounded-xl border border-slate-800 bg-slate-900 p-5"
+                >
+                  <h3 className="font-semibold text-white">
+                    {title}
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    {description}
+                  </p>
+
+                  <div className="mt-4 flex flex-wrap gap-4 text-sm">
+                    <span className="text-slate-300">
+                      Opportunity Score:{" "}
+                      {score !== null ? score.toFixed(1) : "Not available"}
+                    </span>
+
+                    <span className="text-slate-400">
+                      Pain Score:{" "}
+                      {typeof cluster.pain_score === "number"
+                        ? cluster.pain_score.toFixed(1)
+                        : "Not available"}
+                    </span>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         ) : (
           <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-6 text-sm text-slate-400">
             No opportunity data is available yet.
@@ -239,14 +343,49 @@ function Dashboard() {
           </h2>
 
           <p className="mt-1 text-sm text-slate-400">
-            Feature suggestions returned by the analysis.
+            MVP feature suggestions generated by the analysis.
           </p>
         </div>
 
-        <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-6 text-sm text-slate-400">
-          Feature request summaries will appear here when structured
-          feature data is available.
-        </p>
+        {featureRequests.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {featureRequests.slice(0, 4).map((cluster) => {
+              const opportunity =
+                cluster.opportunity as Record<string, unknown>;
+
+              const features = Array.isArray(opportunity.mvp_features)
+                ? opportunity.mvp_features.filter(
+                    (feature): feature is string =>
+                      typeof feature === "string" &&
+                      feature.trim().length > 0
+                  )
+                : [];
+
+              return (
+                <article
+                  key={cluster.cluster}
+                  className="rounded-xl border border-slate-800 bg-slate-900 p-5"
+                >
+                  <h3 className="font-semibold text-white">
+                    Cluster {cluster.cluster} Feature Suggestions
+                  </h3>
+
+                  <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-400">
+                    {features.map((feature, index) => (
+                      <li key={`${cluster.cluster}-${index}`}>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-6 text-sm text-slate-400">
+            No structured feature suggestions are available yet.
+          </p>
+        )}
       </section>
 
       <section aria-labelledby="product-opportunities-title">
@@ -255,11 +394,11 @@ function Dashboard() {
             id="product-opportunities-title"
             className="text-2xl font-semibold text-white"
           >
-            Product Opportunities
+            Recent Activity
           </h2>
 
           <p className="mt-1 text-sm text-slate-400">
-            Recent analysis activity and saved searches.
+            Your recent saved searches and analysis activity.
           </p>
         </div>
 

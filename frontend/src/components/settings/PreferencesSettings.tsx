@@ -13,6 +13,9 @@ const defaultPreferences: Preferences = {
   timeRange: "30",
 };
 
+const validSources = ["all", "reddit", "github"];
+const validTimeRanges = ["7", "30", "90"];
+
 function PreferencesSettings() {
   const { user } = useAuth();
 
@@ -20,6 +23,7 @@ function PreferencesSettings() {
     useState<Preferences>(defaultPreferences);
   const [saved, setSaved] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState("");
 
   const storageKey = user
     ? `insightforge-preferences-${user.id}`
@@ -28,6 +32,7 @@ function PreferencesSettings() {
   useEffect(() => {
     setLoaded(false);
     setSaved(false);
+    setError("");
     setPreferences(defaultPreferences);
 
     if (!storageKey) {
@@ -41,24 +46,28 @@ function PreferencesSettings() {
       if (stored) {
         const parsed: unknown = JSON.parse(stored);
 
-        if (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          "source" in parsed &&
-          "timeRange" in parsed &&
-          typeof parsed.source === "string" &&
-          ["all", "reddit", "github"].includes(parsed.source) &&
-          typeof parsed.timeRange === "string" &&
-          ["7", "30", "90"].includes(parsed.timeRange)
-        ) {
-          setPreferences({
-            source: parsed.source,
-            timeRange: parsed.timeRange,
-          });
+        if (typeof parsed === "object" && parsed !== null) {
+          const data = parsed as Record<string, unknown>;
+
+          const source =
+            typeof data.source === "string" &&
+            validSources.includes(data.source)
+              ? data.source
+              : defaultPreferences.source;
+
+          const timeRange =
+            typeof data.timeRange === "string" &&
+            validTimeRanges.includes(data.timeRange)
+              ? data.timeRange
+              : defaultPreferences.timeRange;
+
+          setPreferences({ source, timeRange });
         }
       }
     } catch {
-      // Keep defaults if saved preferences cannot be read.
+      setError(
+        "Could not load saved preferences. You can select your preferences and save them again."
+      );
     } finally {
       setLoaded(true);
     }
@@ -74,26 +83,44 @@ function PreferencesSettings() {
     }));
 
     setSaved(false);
+    setError("");
   }
 
   function handleSave() {
-    if (!storageKey) return;
+    if (!storageKey) {
+      setError("Please sign in before saving preferences.");
+      return;
+    }
+
+    if (
+      !validSources.includes(preferences.source) ||
+      !validTimeRanges.includes(preferences.timeRange)
+    ) {
+      setError("Please select valid analysis preferences.");
+      setSaved(false);
+      return;
+    }
 
     try {
       localStorage.setItem(
         storageKey,
         JSON.stringify(preferences)
       );
+
       setSaved(true);
+      setError("");
     } catch {
       setSaved(false);
+      setError(
+        "Unable to save preferences in this browser. Check your browser storage settings."
+      );
     }
   }
 
   return (
     <SettingsSection
       title="Preferences"
-      description="Customize your default analysis source and time range."
+      description="Customize your default analysis source and time range. These settings are saved in this browser."
     >
       <form
         className="space-y-6"
@@ -147,6 +174,15 @@ function PreferencesSettings() {
             <option value="90">Last 90 days</option>
           </select>
         </div>
+
+        {error && (
+          <p
+            role="alert"
+            className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+          >
+            {error}
+          </p>
+        )}
 
         {saved && (
           <p

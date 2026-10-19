@@ -39,9 +39,19 @@ function ComplaintDetailsSection({
             <ComplaintDetails
               key={result.cluster}
               title={`Complaint Cluster ${result.cluster}`}
-              painScore={0}
+              painScore={
+                typeof result.pain_score === "number" &&
+                Number.isFinite(result.pain_score)
+                  ? result.pain_score
+                  : 0
+              }
               mentions={result.documents}
-              growth={0}
+              growth={
+                typeof result.growth === "number" &&
+                Number.isFinite(result.growth)
+                  ? result.growth
+                  : undefined
+              }
               summary={result.summary}
               themes={[]}
               complaints={[]}

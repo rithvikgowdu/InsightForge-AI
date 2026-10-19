@@ -148,12 +148,16 @@ export type StartAnalysisRequest = {
  * One individual cluster returned inside
  * the completed analysis results.
  */
+
 export type AnalysisResult = {
   cluster: number;
   documents: number;
   summary: string;
+  pain_score: number;
   opportunity?: Record<string, unknown>;
+  growth?: number | null;
 };
+
 
 
 /*

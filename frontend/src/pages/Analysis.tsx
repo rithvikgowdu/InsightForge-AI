@@ -60,7 +60,7 @@ function Analysis() {
       }
     }
 
-    loadHistory();
+    void loadHistory();
 
     return () => {
       cancelled = true;
@@ -91,7 +91,11 @@ function Analysis() {
     return (
       total +
       (Array.isArray(features)
-        ? features.filter((feature) => typeof feature === "string").length
+        ? features.filter(
+            (feature) =>
+              typeof feature === "string" &&
+              feature.trim().length > 0
+          ).length
         : 0)
     );
   }, 0);
@@ -102,7 +106,8 @@ function Analysis() {
       (total, cluster) => total + cluster.documents,
       0
     ),
-    complaintClusters: selectedAnalysis?.total_clusters ?? 0,
+    complaintClusters:
+      selectedAnalysis?.total_clusters ?? clusters.length,
     featureRequests: featureRequestCount,
     opportunities: opportunities.length,
   };
