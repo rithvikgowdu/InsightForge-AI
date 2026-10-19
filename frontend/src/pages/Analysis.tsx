@@ -16,12 +16,12 @@ import OpportunityIntelligence from "../components/analysis/OpportunityIntellige
 import {
   getAnalysisHistory,
   type Analysis as AnalysisType,
+  type AnalysisResult,
 } from "../services/api";
 
 function Analysis() {
   const [selectedAnalysis, setSelectedAnalysis] =
     useState<AnalysisType | null>(null);
-
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [historyError, setHistoryError] = useState("");
 
@@ -31,7 +31,6 @@ function Analysis() {
     async function loadHistory() {
       try {
         const history = await getAnalysisHistory();
-
         if (cancelled) return;
 
         const completed = history
@@ -43,7 +42,18 @@ function Analysis() {
           );
 
         if (completed.length > 0) {
-          setSelectedAnalysis(completed[0]);
+          setSelectedAnalysis((current) => {
+            // Preserve a newer analysis started while history was loading.
+            if (
+              current &&
+              new Date(current.created_at ?? 0).getTime() >=
+                new Date(completed[0].created_at ?? 0).getTime()
+            ) {
+              return current;
+            }
+
+            return completed[0];
+          });
         }
       } catch (error) {
         if (!cancelled) {
@@ -54,9 +64,7 @@ function Analysis() {
           );
         }
       } finally {
-        if (!cancelled) {
-          setLoadingHistory(false);
-        }
+        if (!cancelled) setLoadingHistory(false);
       }
     }
 
@@ -67,20 +75,30 @@ function Analysis() {
     };
   }, []);
 
-  const clusters = selectedAnalysis?.results?.clusters ?? [];
+  const rawClusters = selectedAnalysis?.results?.clusters;
+
+  const clusters: AnalysisResult[] = Array.isArray(rawClusters)
+    ? rawClusters.filter(
+        (cluster): cluster is AnalysisResult =>
+          cluster !== null &&
+          typeof cluster === "object" &&
+          typeof cluster.cluster === "number" &&
+          typeof cluster.documents === "number" &&
+          typeof cluster.summary === "string"
+      )
+    : [];
 
   const opportunities = clusters.filter(
     (cluster) => cluster.opportunity != null
   );
 
   const featureRequestCount = clusters.reduce((total, cluster) => {
-    const opportunity = cluster.opportunity;
+    const data = cluster.opportunity as
+      | Record<string, unknown>
+      | undefined;
 
-    if (!opportunity || typeof opportunity !== "object") {
-      return total;
-    }
+    if (!data) return total;
 
-    const data = opportunity as Record<string, unknown>;
     const features =
       data.featureRequests ??
       data.feature_requests ??
@@ -94,7 +112,8 @@ function Analysis() {
         ? features.filter(
             (feature) =>
               typeof feature === "string" &&
-              feature.trim().length > 0
+              feature.trim().length > 0 &&
+              feature.toLowerCase() !== "none"
           ).length
         : 0)
     );
@@ -118,11 +137,9 @@ function Analysis() {
         <p className="text-sm font-medium text-blue-400">
           Product Intelligence
         </p>
-
         <h1 className="mt-2 text-3xl font-bold text-white">
           Analysis
         </h1>
-
         <p className="mt-2 max-w-2xl text-slate-400">
           Discover recurring customer problems, feature requests,
           emerging trends, and product opportunities from public
@@ -164,7 +181,6 @@ function Analysis() {
       />
 
       <ComplaintClusters results={clusters} />
-
       <ComplaintDetailsSection results={clusters} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -186,11 +202,9 @@ function Analysis() {
           >
             Start an Analysis
           </h2>
-
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">
             Enter a GitHub owner and repository above to discover
-            what users are complaining about, requesting, and
-            discussing.
+            what users are complaining about, requesting, and discussing.
           </p>
         </section>
       )}

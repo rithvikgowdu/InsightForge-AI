@@ -65,13 +65,13 @@ function AnalysisStatus({
       if (!analysis || analysis.status !== "completed") return;
       if (fetchedIdsRef.current.has(analysis.id)) return;
 
-      fetchedIdsRef.current.add(analysis.id);
-      setLoadingResults(true);
+setLoadingResults(true);
 
-      try {
-        const result = await getAnalysis(analysis.id);
-        if (cancelled) return;
+try {
+  const result = await getAnalysis(analysis.id);
+  if (cancelled) return;
 
+  fetchedIdsRef.current.add(analysis.id);
         setCurrentAnalysis(result);
         setStatusData({
           id: result.id,
