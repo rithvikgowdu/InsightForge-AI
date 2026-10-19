@@ -1,14 +1,13 @@
 
 import { useEffect, useState } from "react";
 import SettingsSection from "./SettingsSection";
+import { useAuth } from "../../context/AuthContext";
 
 type NotificationPreferences = {
   opportunityAlerts: boolean;
   trendAlerts: boolean;
   reportAlerts: boolean;
 };
-
-const STORAGE_KEY = "insightforge-notifications";
 
 const defaultPreferences: NotificationPreferences = {
   opportunityAlerts: true,
@@ -17,14 +16,29 @@ const defaultPreferences: NotificationPreferences = {
 };
 
 function NotificationSettings() {
+  const { user } = useAuth();
+
   const [preferences, setPreferences] =
     useState<NotificationPreferences>(defaultPreferences);
   const [saved, setSaved] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
+  const storageKey = user
+    ? `insightforge-notifications-${user.id}`
+    : null;
+
   useEffect(() => {
+    setLoaded(false);
+    setSaved(false);
+    setPreferences(defaultPreferences);
+
+    if (!storageKey) {
+      setLoaded(true);
+      return;
+    }
+
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(storageKey);
 
       if (stored) {
         const parsed: unknown = JSON.parse(stored);
@@ -47,11 +61,11 @@ function NotificationSettings() {
         }
       }
     } catch {
-      // Use default preferences if saved data cannot be read.
+      // Use defaults if saved preferences cannot be read.
     } finally {
       setLoaded(true);
     }
-  }, []);
+  }, [storageKey]);
 
   function updatePreference(
     field: keyof NotificationPreferences,
@@ -66,12 +80,13 @@ function NotificationSettings() {
   }
 
   function handleSave() {
+    if (!storageKey) return;
+
     try {
       localStorage.setItem(
-        STORAGE_KEY,
+        storageKey,
         JSON.stringify(preferences)
       );
-
       setSaved(true);
     } catch {
       setSaved(false);
@@ -99,11 +114,10 @@ function NotificationSettings() {
               Enable your preference for new product opportunity alerts.
             </p>
           </div>
-
           <input
             type="checkbox"
             checked={preferences.opportunityAlerts}
-            disabled={!loaded}
+            disabled={!loaded || !user}
             onChange={(event) =>
               updatePreference("opportunityAlerts", event.target.checked)
             }
@@ -120,11 +134,10 @@ function NotificationSettings() {
               Enable your preference for important complaint or demand trend alerts.
             </p>
           </div>
-
           <input
             type="checkbox"
             checked={preferences.trendAlerts}
-            disabled={!loaded}
+            disabled={!loaded || !user}
             onChange={(event) =>
               updatePreference("trendAlerts", event.target.checked)
             }
@@ -141,11 +154,10 @@ function NotificationSettings() {
               Enable your preference for notifications when reports are ready.
             </p>
           </div>
-
           <input
             type="checkbox"
             checked={preferences.reportAlerts}
-            disabled={!loaded}
+            disabled={!loaded || !user}
             onChange={(event) =>
               updatePreference("reportAlerts", event.target.checked)
             }
@@ -158,13 +170,13 @@ function NotificationSettings() {
             role="status"
             className="rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-400"
           >
-            Notification preferences saved in this browser.
+            Notification preferences saved for this account in this browser.
           </p>
         )}
 
         <button
           type="submit"
-          disabled={!loaded}
+          disabled={!loaded || !user}
           className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Save Notifications

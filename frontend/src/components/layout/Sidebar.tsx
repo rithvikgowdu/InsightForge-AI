@@ -1,3 +1,4 @@
+
 import {
   FiHome,
   FiSearch,
@@ -44,7 +45,6 @@ function Sidebar() {
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-slate-800 bg-slate-900">
-
       {/* Logo */}
       <div className="border-b border-slate-800 p-6">
         <button
@@ -57,14 +57,12 @@ function Sidebar() {
         </button>
       </div>
 
-
       {/* Navigation */}
       <nav
         className="flex-1 p-4"
         aria-label="Main navigation"
       >
         <ul className="space-y-2">
-
           {menuItems.map((item) => {
             const Icon = item.icon;
             const active = location.pathname === item.path;
@@ -76,18 +74,9 @@ function Sidebar() {
                   onClick={() => navigate(item.path)}
                   aria-current={active ? "page" : undefined}
                   className={`
-                    flex
-                    w-full
-                    items-center
-                    gap-3
-                    rounded-xl
-                    px-4
-                    py-3
-                    text-left
-                    transition
-                    focus:outline-none
-                    focus:ring-2
-                    focus:ring-blue-500/40
+                    flex w-full items-center gap-3 rounded-xl px-4 py-3
+                    text-left transition focus:outline-none
+                    focus:ring-2 focus:ring-blue-500/40
                     ${
                       active
                         ? "bg-blue-600 text-white"
@@ -96,33 +85,35 @@ function Sidebar() {
                   `}
                 >
                   <Icon size={20} />
-
                   <span>{item.label}</span>
                 </button>
               </li>
             );
           })}
-
         </ul>
       </nav>
 
-
       {/* Bottom Actions */}
       <div className="border-t border-slate-800 p-4">
-
         {/* Help */}
         <button
           type="button"
-          onClick={() => {
-            // Help page can be connected later.
-          }}
-          className="mb-2 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-slate-300 transition hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+          onClick={() => navigate("/help")}
+          aria-current={location.pathname === "/help" ? "page" : undefined}
+          className={`
+            mb-2 flex w-full items-center gap-3 rounded-xl px-4 py-3
+            text-left transition focus:outline-none
+            focus:ring-2 focus:ring-blue-500/40
+            ${
+              location.pathname === "/help"
+                ? "bg-blue-600 text-white"
+                : "text-slate-300 hover:bg-slate-800 hover:text-white"
+            }
+          `}
         >
-          <FiHelpCircle />
-
+          <FiHelpCircle size={20} />
           <span>Help</span>
         </button>
-
 
         {/* Logout */}
         <button
@@ -130,13 +121,10 @@ function Sidebar() {
           onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-red-400 transition hover:bg-red-500/10 focus:outline-none focus:ring-2 focus:ring-red-500/40"
         >
-          <FiLogOut />
-
+          <FiLogOut size={20} />
           <span>Logout</span>
         </button>
-
       </div>
-
     </aside>
   );
 }

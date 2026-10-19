@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import RepositoryAnalysisForm from "../components/analysis/RepositoryAnalysisForm";
 import AnalysisStatus from "../components/analysis/AnalysisStatus";
@@ -12,11 +12,60 @@ import ClassificationBreakdown from "../components/analysis/ClassificationBreakd
 import FeatureRequestList from "../components/analysis/FeatureRequestList";
 import TrendIntelligence from "../components/analysis/TrendIntelligence";
 import OpportunityIntelligence from "../components/analysis/OpportunityIntelligence";
-import type { Analysis as AnalysisType } from "../services/api";
+
+import {
+  getAnalysisHistory,
+  type Analysis as AnalysisType,
+} from "../services/api";
 
 function Analysis() {
   const [selectedAnalysis, setSelectedAnalysis] =
     useState<AnalysisType | null>(null);
+
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [historyError, setHistoryError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHistory() {
+      try {
+        const history = await getAnalysisHistory();
+
+        if (cancelled) return;
+
+        const completed = history
+          .filter((item) => item.status === "completed")
+          .sort(
+            (a, b) =>
+              new Date(b.created_at ?? 0).getTime() -
+              new Date(a.created_at ?? 0).getTime()
+          );
+
+        if (completed.length > 0) {
+          setSelectedAnalysis(completed[0]);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setHistoryError(
+            error instanceof Error
+              ? error.message
+              : "Could not load analysis history."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingHistory(false);
+        }
+      }
+    }
+
+    loadHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const clusters = selectedAnalysis?.results?.clusters ?? [];
 
@@ -39,9 +88,12 @@ function Analysis() {
       data.mvpFeatures ??
       data.mvp_features;
 
-    return total + (Array.isArray(features)
-      ? features.filter((feature) => typeof feature === "string").length
-      : 0);
+    return (
+      total +
+      (Array.isArray(features)
+        ? features.filter((feature) => typeof feature === "string").length
+        : 0)
+    );
   }, 0);
 
   const analysisSummary = {
@@ -82,6 +134,18 @@ function Analysis() {
         />
       )}
 
+      {loadingHistory && (
+        <p className="text-sm text-slate-400">
+          Loading your previous analyses...
+        </p>
+      )}
+
+      {historyError && (
+        <p role="alert" className="text-sm text-red-400">
+          Could not load previous analyses: {historyError}
+        </p>
+      )}
+
       <section aria-label="Analysis filters">
         <AnalysisFilters />
       </section>
@@ -100,17 +164,13 @@ function Analysis() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <SentimentOverview />
-
         <ClassificationBreakdown />
-
         <FeatureRequestList results={clusters} />
-
         <TrendIntelligence results={clusters} />
-
         <OpportunityIntelligence results={clusters} />
       </div>
 
-      {!selectedAnalysis && (
+      {!loadingHistory && !selectedAnalysis && (
         <section
           aria-labelledby="start-analysis-title"
           className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-12 text-center"

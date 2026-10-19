@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/auth/AuthLayout";
@@ -8,6 +9,7 @@ function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -15,27 +17,27 @@ function ResetPassword() {
     event.preventDefault();
 
     setError("");
+    setMessage("");
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
-    // Password reset API is not available in the current backend.
-    // Keep the form ready for backend integration.
+    setMessage(
+      "Password reset is not available yet. No password has been changed. Please return to sign in and use your existing password."
+    );
   }
 
   return (
     <AuthLayout
       title="Reset your password"
-      subtitle="Create a new password for your InsightForge account."
+      subtitle="Password reset is not currently available."
     >
       <form
         className="space-y-5"
         onSubmit={handleSubmit}
       >
-
-        {/* New Password */}
         <div>
           <label
             htmlFor="new-password"
@@ -49,9 +51,11 @@ function ResetPassword() {
             name="password"
             type="password"
             value={password}
-            onChange={(event) =>
-              setPassword(event.target.value)
-            }
+            onChange={(event) => {
+              setPassword(event.target.value);
+              setError("");
+              setMessage("");
+            }}
             placeholder="Enter a new password"
             autoComplete="new-password"
             required
@@ -59,8 +63,6 @@ function ResetPassword() {
           />
         </div>
 
-
-        {/* Confirm */}
         <div>
           <label
             htmlFor="reset-confirm-password"
@@ -74,9 +76,11 @@ function ResetPassword() {
             name="confirmPassword"
             type="password"
             value={confirmPassword}
-            onChange={(event) =>
-              setConfirmPassword(event.target.value)
-            }
+            onChange={(event) => {
+              setConfirmPassword(event.target.value);
+              setError("");
+              setMessage("");
+            }}
             placeholder="Confirm your new password"
             autoComplete="new-password"
             required
@@ -84,19 +88,24 @@ function ResetPassword() {
           />
         </div>
 
-
-        {/* Error */}
         {error && (
-          <div
+          <p
             role="alert"
             className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
           >
             {error}
-          </div>
+          </p>
         )}
 
+        {message && (
+          <p
+            role="status"
+            className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-300"
+          >
+            {message}
+          </p>
+        )}
 
-        {/* Submit */}
         <button
           type="submit"
           className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950"
@@ -104,8 +113,6 @@ function ResetPassword() {
           Reset Password
         </button>
 
-
-        {/* Back to Login */}
         <button
           type="button"
           onClick={() => navigate("/login")}
@@ -113,7 +120,6 @@ function ResetPassword() {
         >
           ← Back to Sign In
         </button>
-
       </form>
     </AuthLayout>
   );

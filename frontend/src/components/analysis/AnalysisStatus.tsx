@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import {
   getAnalysis,
@@ -29,23 +30,32 @@ function AnalysisStatus({
     useState<StatusData | null>(null);
 
   const [error, setError] = useState("");
-   const onCompletedRef = useRef(onCompleted);
 
-useEffect(() => {
-  onCompletedRef.current = onCompleted;
-}, [onCompleted]);
+  const onCompletedRef = useRef(onCompleted);
+
+  useEffect(() => {
+    onCompletedRef.current = onCompleted;
+  }, [onCompleted]);
+
   /*
-   * Set the initial analysis information.
+   * Initialize the selected analysis.
+   * If it is already completed, fetch its saved results.
    */
   useEffect(() => {
+    let cancelled = false;
+
     if (!analysis) {
       setCurrentAnalysis(null);
       setStatusData(null);
       setError("");
-      return;
+
+      return () => {
+        cancelled = true;
+      };
     }
 
     setError("");
+    setCurrentAnalysis(null);
 
     setStatusData({
       id: analysis.id,
@@ -54,23 +64,42 @@ useEffect(() => {
       total_clusters: analysis.total_clusters,
     });
 
-    /*
-     * The POST /analysis response may not contain
-     * the complete results structure.
-     *
-     * We therefore wait for GET /analysis/{id}
-     * when the analysis is completed.
-     */
-    setCurrentAnalysis(null);
-  }, [analysis]);
+    if (analysis.status === "completed") {
+      getAnalysis(analysis.id)
+        .then((completedAnalysis) => {
+          if (cancelled) return;
+
+          setCurrentAnalysis(completedAnalysis);
+          setStatusData({
+            id: completedAnalysis.id,
+            repository: completedAnalysis.repository,
+            status: completedAnalysis.status,
+            total_clusters: completedAnalysis.total_clusters,
+          });
+
+          onCompletedRef.current?.(completedAnalysis);
+        })
+        .catch((err: unknown) => {
+          if (cancelled) return;
+
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Unable to load completed analysis results."
+          );
+        });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [analysis?.id, analysis?.status]);
 
   /*
-   * Poll the backend while the analysis is running.
+   * Poll while the analysis is pending or running.
    */
   useEffect(() => {
-    if (!statusData) {
-      return;
-    }
+    if (!statusData) return;
 
     if (
       statusData.status === "completed" ||
@@ -80,90 +109,73 @@ useEffect(() => {
     }
 
     let cancelled = false;
+    let checking = false;
 
     async function checkStatus() {
-      try {
-        const updatedStatus =
-          await getAnalysisStatus(statusData!.id);
+      if (checking) return;
+      checking = true;
 
-        if (cancelled) {
-          return;
-        }
+      try {
+        const updatedStatus = await getAnalysisStatus(
+          statusData!.id
+        );
+
+        if (cancelled) return;
 
         setStatusData({
           id: updatedStatus.id,
           repository: updatedStatus.repository,
           status: updatedStatus.status,
-          total_clusters:
-            updatedStatus.total_clusters,
+          total_clusters: updatedStatus.total_clusters,
         });
 
-        /*
-         * Once completed, fetch the complete analysis
-         * including the cluster results.
-         */
         if (updatedStatus.status === "completed") {
-          const completedAnalysis =
-            await getAnalysis(updatedStatus.id);
+          const completedAnalysis = await getAnalysis(
+            updatedStatus.id
+          );
 
-          if (cancelled) {
-            return;
-          }
+          if (cancelled) return;
 
           setCurrentAnalysis(completedAnalysis);
-
           onCompletedRef.current?.(completedAnalysis);
         }
 
         if (updatedStatus.status === "failed") {
-          setError(
-            "The analysis failed. Please try again."
-          );
+          setError("The analysis failed. Please try again.");
         }
-      } catch (err) {
-        if (cancelled) {
-          return;
-        }
+      } catch (err: unknown) {
+        if (cancelled) return;
 
         setError(
           err instanceof Error
             ? err.message
             : "Unable to check analysis status."
         );
+      } finally {
+        checking = false;
       }
     }
 
-    /*
-     * Check immediately.
-     */
-    checkStatus();
+    void checkStatus();
 
-    /*
-     * Then check every 3 seconds.
-     */
-    const interval = window.setInterval(
-      checkStatus,
-      3000
-    );
+    const interval = window.setInterval(() => {
+      void checkStatus();
+    }, 3000);
 
     return () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [
-  statusData?.id,
-  statusData?.status,
-]);
-  if (!statusData) {
-    return null;
-  }
+  }, [statusData?.id, statusData?.status]);
+
+  if (!statusData) return null;
 
   const status = statusData.status;
 
   const statusMessage =
     status === "pending"
       ? "Analysis is waiting to start..."
-      : status === "running"
+      : status === "running" || status === "processing"
       ? "Analysis is currently running..."
       : status === "completed"
       ? "Analysis completed successfully."
@@ -171,8 +183,7 @@ useEffect(() => {
       ? "Analysis failed."
       : "Checking analysis status...";
 
-  const clusters =
-    currentAnalysis?.results?.clusters ?? [];
+  const clusters = currentAnalysis?.results?.clusters ?? [];
 
   return (
     <section
@@ -180,7 +191,6 @@ useEffect(() => {
       aria-live="polite"
       className="rounded-xl border border-slate-800 bg-slate-900 p-6"
     >
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-medium text-slate-300">
@@ -215,20 +225,16 @@ useEffect(() => {
         </span>
       </div>
 
-      {/* Status Message */}
       <p className="mt-5 text-sm text-slate-400">
         {statusMessage}
       </p>
 
-      {/* Progress */}
-      {status !== "completed" &&
-        status !== "failed" && (
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
-            <div className="h-full w-1/3 animate-pulse rounded-full bg-blue-500" />
-          </div>
-        )}
+      {status !== "completed" && status !== "failed" && (
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
+          <div className="h-full w-1/3 animate-pulse rounded-full bg-blue-500" />
+        </div>
+      )}
 
-      {/* Completed Summary */}
       {status === "completed" && (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="rounded-lg border border-slate-800 bg-slate-950 p-4">
@@ -253,51 +259,90 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Analysis Results */}
-      {status === "completed" &&
-        clusters.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-base font-semibold text-white">
-              Analysis Results
-            </h3>
+      {status === "completed" && clusters.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-base font-semibold text-white">
+            Analysis Results
+          </h3>
 
-            <div className="mt-4 space-y-3">
-              {clusters.map((result) => (
-                <div
-                  key={result.cluster}
-                  className="rounded-lg border border-slate-800 bg-slate-950 p-4"
-                >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <h4 className="font-semibold text-white">
-                      Cluster {result.cluster}
-                    </h4>
+          <div className="mt-4 space-y-3">
+            {clusters.map((result) => (
+              <div
+                key={result.cluster}
+                className="rounded-lg border border-slate-800 bg-slate-950 p-4"
+              >
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <h4 className="font-semibold text-white">
+                    Cluster {result.cluster}
+                  </h4>
 
-                    <span className="text-xs text-slate-500">
-                      {result.documents} documents
-                    </span>
-                  </div>
-
-                  <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-400">
-                    {result.summary}
-                  </p>
+                  <span className="text-xs text-slate-500">
+                    {result.documents} documents
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
 
-      {/* No Results */}
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-400">
+                  {result.summary}
+                </p>
+
+                {result.opportunity && (
+                  <div className="mt-4 border-t border-slate-800 pt-4">
+                    <h5 className="font-medium text-blue-400">
+                      Product Opportunity
+                    </h5>
+
+                    {typeof result.opportunity.problem_statement === "string" && (
+                      <p className="mt-2 text-sm text-slate-300">
+                        <strong>Problem:</strong>{" "}
+                        {result.opportunity.problem_statement}
+                      </p>
+                    )}
+
+                    {typeof result.opportunity.business_opportunity === "string" && (
+                      <p className="mt-2 text-sm text-slate-300">
+                        <strong>Business opportunity:</strong>{" "}
+                        {result.opportunity.business_opportunity}
+                      </p>
+                    )}
+
+                    {typeof result.opportunity.ai_solution === "string" && (
+                      <p className="mt-2 text-sm text-slate-300">
+                        <strong>AI solution:</strong>{" "}
+                        {result.opportunity.ai_solution}
+                      </p>
+                    )}
+
+                    {Array.isArray(result.opportunity.mvp_features) && (
+                      <ul className="mt-2 list-inside list-disc text-sm text-slate-400">
+                        {result.opportunity.mvp_features
+                          .filter(
+                            (feature): feature is string =>
+                              typeof feature === "string"
+                          )
+                          .map((feature) => (
+                            <li key={feature}>{feature}</li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {status === "completed" &&
-        clusters.length === 0 && (
+        clusters.length === 0 &&
+        !error && (
           <div className="mt-6 rounded-lg border border-dashed border-slate-700 bg-slate-950 p-5">
             <p className="text-sm text-slate-400">
-              The analysis completed, but no cluster
-              results were returned.
+              Loading saved cluster results, or no cluster results
+              are available.
             </p>
           </div>
         )}
 
-      {/* Error */}
       {error && (
         <div
           role="alert"

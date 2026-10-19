@@ -9,11 +9,7 @@ import {
 import SearchBar from "../components/dashboard/SearchBar";
 import StatsCard from "../components/dashboard/StatsCard";
 import ComplaintCard from "../components/dashboard/ComplaintCard";
-import PainScoreCard from "../components/dashboard/PainScoreCard";
 import TrendCard from "../components/dashboard/TrendCard";
-import OpportunityScoreCard from "../components/dashboard/OpportunityScoreCard";
-import FeatureRequestCard from "../components/dashboard/FeatureRequestCard";
-import OpportunityCard from "../components/dashboard/OpportunityCard";
 import RecentSearches from "../components/dashboard/RecentSearches";
 
 function Dashboard() {
@@ -49,7 +45,7 @@ function Dashboard() {
       }
     }
 
-    loadHistory();
+    void loadHistory();
 
     return () => {
       cancelled = true;
@@ -60,9 +56,9 @@ function Dashboard() {
     (analysis) => analysis.status === "completed"
   );
 
-  const opportunities = completedAnalyses.flatMap(
-    (analysis) => analysis.results?.clusters ?? []
-  ).filter((cluster) => cluster.opportunity != null);
+  const opportunities = completedAnalyses
+    .flatMap((analysis) => analysis.results?.clusters ?? [])
+    .filter((cluster) => cluster.opportunity != null);
 
   const trendingTopics = completedAnalyses.flatMap(
     (analysis) => analysis.results?.clusters ?? []
@@ -157,11 +153,22 @@ function Dashboard() {
             <ComplaintCard
               title={`Complaint Cluster ${latestCluster.cluster}`}
               mentions={latestCluster.documents}
-              painScore={0}
+              painScore={null}
               summary={latestCluster.summary}
             />
 
-            <PainScoreCard score={0} />
+            <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-lg">
+              <p className="text-sm text-slate-400">
+                Pain Score
+              </p>
+              <p className="mt-2 text-2xl font-bold text-white">
+                Not calculated
+              </p>
+              <p className="mt-3 text-sm text-slate-400">
+                A pain score is not currently provided by the analysis
+                API. No score has been inferred.
+              </p>
+            </div>
           </div>
         ) : (
           <p className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-6 text-sm text-slate-400">

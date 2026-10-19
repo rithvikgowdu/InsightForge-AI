@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter,
   Navigate,
@@ -6,13 +7,13 @@ import {
 } from "react-router-dom";
 
 import { useAuth } from "./context/AuthContext";
-
 import DashboardLayout from "./layouts/DashboardLayout";
 
 import Dashboard from "./pages/Dashboard";
 import Analysis from "./pages/Analysis";
 import Report from "./pages/Report";
 import Settings from "./pages/Settings";
+import Help from "./pages/Help";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -50,17 +51,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* Authentication */}
-        <Route
-          path="/login"
-          element={<Login />}
-        />
+        <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/register"
-          element={<Register />}
-        />
+        <Route path="/register" element={<Register />} />
 
         <Route
           path="/forgot-password"
@@ -72,8 +66,7 @@ function App() {
           element={<ResetPassword />}
         />
 
-
-        {/* Protected Application */}
+        {/* Protected application */}
         <Route
           path="/dashboard"
           element={
@@ -118,29 +111,29 @@ function App() {
           }
         />
 
+        {/* Help */}
+        <Route
+          path="/help"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Help />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Default */}
+        {/* Default route */}
         <Route
           path="/"
-          element={
-            <Navigate
-              to="/dashboard"
-              replace
-            />
-          }
+          element={<Navigate to="/dashboard" replace />}
         />
 
         {/* Unknown routes */}
         <Route
           path="*"
-          element={
-            <Navigate
-              to="/dashboard"
-              replace
-            />
-          }
+          element={<Navigate to="/dashboard" replace />}
         />
-
       </Routes>
     </BrowserRouter>
   );

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/auth/AuthLayout";
@@ -5,14 +6,16 @@ import AuthLayout from "../components/auth/AuthLayout";
 function ForgotPassword() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
 
   function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
 
-    // Password reset API is not available in the current backend.
-    // Keep the form ready for backend integration.
+    setMessage(
+      "Password reset is not available yet. The backend does not currently support sending reset emails."
+    );
   }
 
   return (
@@ -24,7 +27,6 @@ function ForgotPassword() {
         className="space-y-5"
         onSubmit={handleSubmit}
       >
-
         <div>
           <label
             htmlFor="forgot-email"
@@ -38,15 +40,25 @@ function ForgotPassword() {
             name="email"
             type="email"
             value={email}
-            onChange={(event) =>
-              setEmail(event.target.value)
-            }
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setMessage("");
+            }}
             placeholder="you@example.com"
             autoComplete="email"
             required
             className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
           />
         </div>
+
+        {message && (
+          <p
+            role="status"
+            className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-300"
+          >
+            {message}
+          </p>
+        )}
 
         <button
           type="submit"
@@ -62,7 +74,6 @@ function ForgotPassword() {
         >
           ← Back to Sign In
         </button>
-
       </form>
     </AuthLayout>
   );

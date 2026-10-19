@@ -1,7 +1,8 @@
+
 type ComplaintCardProps = {
   title: string;
   mentions: number;
-  painScore: number;
+  painScore: number | null;
   summary: string;
 };
 
@@ -11,21 +12,35 @@ function ComplaintCard({
   painScore,
   summary,
 }: ComplaintCardProps) {
+  const hasPainScore =
+    painScore !== null &&
+    Number.isFinite(painScore) &&
+    painScore >= 0 &&
+    painScore <= 10;
+
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 shadow-lg">
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <h3 className="text-lg font-semibold text-white">
             {title}
           </h3>
 
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 whitespace-pre-wrap break-words text-sm text-slate-400">
             {summary}
           </p>
         </div>
 
-        <span className="rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-400">
-          Pain {painScore}/10
+        <span
+          className={`shrink-0 rounded-full px-3 py-1 text-sm font-medium ${
+            hasPainScore
+              ? "bg-red-500/10 text-red-400"
+              : "bg-slate-800 text-slate-400"
+          }`}
+        >
+          {hasPainScore
+            ? `Pain ${painScore.toFixed(1)}/10`
+            : "Pain score unavailable"}
         </span>
       </div>
 
